@@ -1,0 +1,14 @@
+<%- include('_top', { title, nav, layout: 'bare' }) %>
+<div class="dlg-stage">
+  <div class="dialog" role="alertdialog" aria-labelledby="dlg-title" aria-describedby="dlg-text">
+    <div>
+      <h1 id="dlg-title"><%= title %></h1>
+      <p id="dlg-text"><%= text %></p>
+    </div>
+    <footer>
+      <a class="btn" href="<%= back %>"><%= action ? 'Annulla' : 'Torna indietro' %></a>
+      <% if (action) { %><form method="post" action="<%= action %>"><button class="btn danger" type="submit" autofocus><%= button %></button></form><% } %>
+    </footer>
+  </div>
+</div>
+<%- include('_bottom') %>

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accedi · MyoLogic Test Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body class="login-page">
+  <main class="login">
+    <div class="tb-brand login-brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 13h4l2-6 3 11 3-9 2 4h6"/></svg></span>MyoLogic<span>Test Manager</span></div>
+    <form class="sheet login-form" method="post" action="/login">
+      <h1>Accedi</h1>
+      <% if (error) { %><p class="error" role="alert"><%= error %></p><% } %>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="username" required value="<%= email %>" <%= email ? '' : 'autofocus' %>>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required <%= email ? 'autofocus' : '' %>>
+      <button class="btn pri" type="submit">Accedi</button>
+      <p class="hint">Non hai un account? Chiedilo al responsabile del software.</p>
+    </form>
+  </main>
+</body>
+</html>

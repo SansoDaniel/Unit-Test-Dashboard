@@ -1,0 +1,58 @@
+<% const t = summary.totals; const isFinalDifferent = report.final_outcome && report.final_outcome !== summary.computed; %>
+<%- include('_top', { title: `Report ${rel.version}`, nav: 'rel' }) %>
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb"><a href="/release">Release</a> / <a href="/release/<%= rel.id %>"><%= rel.version %></a></div><h1>Report di esito · <%= rel.version %></h1></div>
+    <div class="acts">
+      <% if (saved && saved.status === 'draft') { %><form method="post" action="/release/<%= rel.id %>/report/invia"><button class="btn" type="submit">Invia agli approvatori</button></form><% } %>
+      <% if (canApprove) { %><form method="post" action="/release/<%= rel.id %>/report/approva"><button class="btn" type="submit">Approva report</button></form><% } %>
+      <a class="btn" href="/release/<%= rel.id %>/export.xlsx">Esporta Excel</a>
+      <a class="btn" href="/release/<%= rel.id %>/report/stampa" target="_blank" rel="noopener">Esporta PDF</a>
+      <button class="btn pri" type="submit" form="report-form">Salva</button>
+    </div>
+  </div>
+
+  <div class="two">
+    <form id="report-form" class="sheet" method="post" action="/release/<%= rel.id %>/report">
+      <div class="rep-title"><h2>Risultati dei Test</h2><span class="tag <%= statusInfo.tag %>"><%= statusInfo.label %></span></div>
+      <div class="kv">
+        <label for="test_date">Data test</label><span><input id="test_date" name="test_date" type="date" value="<%= report.test_date ?? '' %>"></span>
+        <label for="executed_by">Effettuata da</label><span><select id="executed_by" name="executed_by"><option value="">Non indicato</option><% people.forEach((p) => { %><option value="<%= p.id %>" <%= report.executed_by === p.id ? 'selected' : '' %>><%= p.full_name %></option><% }) %></select></span>
+        <span>Versione software</span><span><span class="mono"><%= rel.version %></span> <span class="sub">dalla release</span></span>
+        <span>Unit Test verificati</span><span><%= summary.sessions.length %> <%= summary.sessions.length === 1 ? 'sessione' : 'sessioni' %> · <%= summary.tests %> test</span>
+      </div>
+      <div class="rep-sec fld"><label for="motivation">Motivazione degli Unit Test</label><textarea id="motivation" name="motivation" rows="2"><%= report.motivation ?? '' %></textarea></div>
+      <div class="rep-sec">
+        <h3>Risultato degli Unit Test <small>calcolato dalle sessioni</small></h3>
+        <table class="mt">
+          <thead><tr><th scope="col">Sessione</th><th scope="col" class="num">PASSED</th><th scope="col" class="num">NOT PASSED</th><th scope="col" class="num">N/A</th><th scope="col" class="num">NOT TESTED</th></tr></thead>
+          <tbody>
+            <% summary.sessions.forEach((s) => { %><tr><td><a href="/sessioni/<%= s.id %>"><%= s.configuration %></a></td><td class="num"><%= s.PASSED %></td><td class="num"><%= s['NOT PASSED'] %></td><td class="num"><%= s['NOT AVAILABLE'] %></td><td class="num"><%= s['NOT TESTED'] %></td></tr><% }) %>
+          </tbody>
+          <tfoot><tr><td>Totale</td><td class="num"><%= t.PASSED %></td><td class="num<%= t['NOT PASSED'] ? ' fail-text' : '' %>"><%= t['NOT PASSED'] %></td><td class="num"><%= t['NOT AVAILABLE'] %></td><td class="num"><%= t['NOT TESTED'] %></td></tr></tfoot>
+        </table>
+        <% if (!summary.sessions.length) { %><p class="sub">Nessuna sessione in questa release.</p><% } %>
+      </div>
+      <div class="rep-sec fld"><label for="next_actions">Prossime azioni</label><textarea id="next_actions" name="next_actions" rows="2"><%= report.next_actions ?? '' %></textarea></div>
+      <div class="rep-sec final">
+        <div class="fld"><span class="lbl">Esito calcolato</span><div><span class="tag <%= computed.tag %>"><%= computed.label %></span></div><span class="sub"><%= summary.failedTests ? `${t['NOT PASSED']} esiti NOT PASSED su ${summary.failedTests} test` : t['NOT TESTED'] ? `${t['NOT TESTED']} test ancora NOT TESTED` : '' %></span></div>
+        <div class="fld"><label for="final_outcome">Risultato finale</label>
+          <select id="final_outcome" name="final_outcome"><option value="">Da decidere</option><% finals.forEach((f) => { %><option value="<%= f %>" <%= report.final_outcome === f ? 'selected' : '' %>><%= f %></option><% }) %></select></div>
+        <div class="fld"><label for="final_reason">Motivazione del risultato finale</label>
+          <textarea id="final_reason" name="final_reason" rows="3" aria-describedby="reason-hint" class="<%= warnReason ? 'invalid' : '' %>"><%= report.final_reason ?? '' %></textarea>
+          <span class="sub<%= warnReason ? ' warn-text' : '' %>" id="reason-hint"><%= warnReason ? 'Il risultato finale è diverso da quello calcolato e manca la motivazione: scrivila prima di inviare il report.' : 'Obbligatoria se il risultato finale è diverso da quello calcolato.' %></span></div>
+      </div>
+      <p class="sub rep-note">Ogni modifica salvata riporta il report in bozza: va inviato di nuovo agli approvatori.</p>
+    </form>
+
+    <aside class="side-col" aria-label="Firme">
+      <section class="sheet">
+        <h2 class="sh-head">Autore e approvatori</h2>
+        <% if (signatures.length) { %>
+          <ul class="plain"><% signatures.forEach((s) => { %><li><span><b><%= s.full_name %></b><% if (s.title) { %> <span class="sub"><%= s.title %></span><% } %></span><span class="sub"><%= s.role === 'approver' ? 'Approvatore' : 'Autore' %> · <%= fmtDay(s.signed_on) %></span></li><% }) %></ul>
+        <% } else { %><p class="empty">Nessuna firma: senza approvatori il report non si può inviare.</p><% } %>
+        <div class="sh-foot"><a class="link" href="/release/<%= rel.id %>#firme">Gestisci le firme</a></div>
+      </section>
+    </aside>
+  </div>
+<%- include('_bottom') %>

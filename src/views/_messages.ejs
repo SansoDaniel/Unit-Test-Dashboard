@@ -1,0 +1,6 @@
+<% if (locals.ok) { %><p class="flash" role="status"><%= ok %></p><% } %>
+<% if (locals.errors && errors.length) { %>
+  <div class="errors" role="alert">
+    <% if (errors.length === 1) { %><p><%= errors[0] %></p><% } else { %><ul><% errors.forEach((e) => { %><li><%= e %></li><% }) %></ul><% } %>
+  </div>
+<% } %>

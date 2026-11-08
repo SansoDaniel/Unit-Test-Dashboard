@@ -1,0 +1,976 @@
+<title>MyoLogic Test Manager</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: documento a colonna singola con indice in alto. Le schermate sono "fotografie" dell'app chiara: i loro token restano chiari anche col tema scuro del documento. */
+:root, .frame{
+  --bg:#E9EFF4; --surface:#FFFFFF; --sunken:#F3F6F9; --ink:#292D38; --muted:#56606E;
+  --line:#CDD7E1; --line-soft:#E2E8EE; --line-strong:#AEBBC8;
+  --primary:#254A6A; --primary-hover:#1D3B55; --primary-weak:#DCE6EF; --on-primary:#FFFFFF;
+  --pass:#21683F; --pass-weak:#DDEEE3; --fail:#A8322A; --fail-weak:#F6E1DE; --na:#8A5A00; --na-weak:#F4E8CF; --todo:#57616F; --todo-weak:#E4E9EF;
+  --topbar:#292D38; --topbar-field:#343945; --topbar-line:#454B59; --on-topbar:#E9EFF4; --on-topbar-muted:#A9B3C1;
+  --cov1:#D3E0EB; --cov2:#A9C2D8; --cov3:#3F6788;
+  --scrim:rgb(41 45 56 / .34); --shadow-pop:0 14px 36px rgb(41 45 56 / .20), 0 2px 6px rgb(41 45 56 / .08);
+  --f-ui:"Atkinson Hyperlegible Next",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Atkinson Hyperlegible Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r-s:3px; --r-m:4px; --r-l:6px;
+  --z-sticky:5; --z-pop:8;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1C1F27; --surface:#292D38; --sunken:#232730; --ink:#E9EFF4; --muted:#A3ADBB;
+  --line:#3A3F4C; --line-soft:#323744; --line-strong:#4C5262;
+  --primary:#8EB2D4; --primary-hover:#A9C5E0; --primary-weak:#2B3A4C; --on-primary:#1C1F27;
+  --pass:#6CC08E; --pass-weak:#1F3328; --fail:#F08A80; --fail-weak:#3D2423; --na:#E0B054; --na-weak:#3A301B; --todo:#9AA5B4; --todo-weak:#303542;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#1C1F27; --surface:#292D38; --sunken:#232730; --ink:#E9EFF4; --muted:#A3ADBB;
+  --line:#3A3F4C; --line-soft:#323744; --line-strong:#4C5262;
+  --primary:#8EB2D4; --primary-hover:#A9C5E0; --primary-weak:#2B3A4C; --on-primary:#1C1F27;
+  --pass:#6CC08E; --pass-weak:#1F3328; --fail:#F08A80; --fail-weak:#3D2423; --na:#E0B054; --na-weak:#3A301B; --todo:#9AA5B4; --todo-weak:#303542;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15.5px/1.6 var(--f-ui);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+a{color:var(--primary);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* ---------- documento ---------- */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:var(--z-sticky);background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1200px;margin:0 auto;padding-block:12px;display:flex;flex-wrap:wrap;gap:6px 24px;align-items:baseline}
+.brand{font-weight:700;font-size:15px}
+.brand span{font-weight:400;color:var(--muted);margin-left:10px;font-size:13.5px}
+.top nav{margin-left:auto;display:flex;flex-wrap:wrap;gap:2px 18px;font-size:14px}
+.top nav a{color:var(--ink);text-decoration:none}
+.top nav a:hover{color:var(--primary);text-decoration:underline}
+.wrap{max-width:1200px;margin:0 auto;padding-block:56px 104px;display:grid;gap:88px}
+section{display:grid;gap:24px;min-width:0;scroll-margin-top:80px}
+h1{font-size:2.6rem;font-weight:700;line-height:1.08;letter-spacing:-.02em;margin:0;max-width:19ch;text-wrap:balance}
+h2{font-size:1.75rem;font-weight:700;line-height:1.15;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h3{font-size:1.1rem;font-weight:600;line-height:1.3;margin:0;text-wrap:balance}
+p{margin:0;max-width:68ch;text-wrap:pretty}
+.lead{font-size:1.2rem;line-height:1.5;max-width:60ch}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-size:.9em}
+.intro{display:grid;gap:8px}
+.hero{display:grid;gap:22px}
+.dateline{font-size:14px;color:var(--muted)}
+.facts{display:flex;flex-wrap:wrap;margin:0;border-block:1px solid var(--line)}
+.facts div{flex:1 1 150px;padding:14px 20px 14px 0;display:grid;gap:0}
+.facts div+div{padding-left:20px;border-left:1px solid var(--line)}
+.facts dt{font-size:13.5px;color:var(--muted);order:2}
+.facts dd{margin:0;font-size:1.65rem;font-weight:700;font-variant-numeric:tabular-nums;order:1}
+
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:32px;align-items:start}
+.cols>*{min-width:0;display:grid;gap:16px;align-content:start}
+.rows{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.rows li{display:grid;grid-template-columns:minmax(0,240px) 1fr;gap:4px 16px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.rows code{font:500 13px/1.5 var(--f-mono);overflow-wrap:anywhere}
+.rows li>span:last-child{color:var(--muted)}
+.issues li{grid-template-columns:64px 1fr}
+.issues b{font:600 15px/1.5 var(--f-mono);font-variant-numeric:tabular-nums}
+.issues li>span:last-child{color:var(--ink)}
+@media (max-width:560px){.rows li{grid-template-columns:1fr}.issues li{grid-template-columns:52px 1fr}}
+.note{font-size:14px;color:var(--muted)}
+
+.tscroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-l);background:var(--surface)}
+.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
+.tbl th{text-align:left;font-weight:600;font-size:13px;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--line);background:var(--sunken);white-space:nowrap}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td:first-child{white-space:nowrap;font-weight:600}
+.tbl .cond{color:var(--muted)}
+.er{border:1px solid var(--line);border-radius:var(--r-l);background:var(--surface);padding:16px;overflow-x:auto}
+.er pre{margin:0}
+
+.shots{display:grid;gap:72px}
+.shot{margin:0;display:grid;gap:16px;min-width:0}
+.shot figcaption{display:grid;gap:6px}
+.shot figcaption .path{font:13px var(--f-mono);color:var(--muted)}
+.scroller{overflow-x:auto;border-radius:var(--r-l)}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:28px;align-items:center}
+
+.phases{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.phases>li{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:8px 32px;padding:20px 0;border-bottom:1px solid var(--line)}
+.phases .ph{display:grid;gap:2px;align-content:start}
+.phases .ph span{font-size:14px;color:var(--muted)}
+.phases ul{margin:0;padding-left:18px;display:grid;gap:4px;max-width:72ch}
+.phases .check{margin-top:8px;font-size:14.5px;color:var(--muted)}
+.phases .check b{color:var(--ink)}
+.dl{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);margin:0;border-top:1px solid var(--line)}
+.dl dt,.dl dd{margin:0;padding:12px 0;border-bottom:1px solid var(--line)}
+.dl dt{font-weight:600;padding-right:16px}
+.dl dd{color:var(--muted)}
+@media (max-width:720px){.phases>li{grid-template-columns:1fr}.dl{grid-template-columns:1fr}.dl dt{border-bottom:0;padding-bottom:0}}
+
+.decisions{list-style:none;margin:0;padding:0;border-top:1px solid var(--line);counter-reset:d}
+.decisions>li{counter-increment:d;display:grid;grid-template-columns:2.4rem minmax(0,1fr);gap:6px 12px;padding:20px 0;border-bottom:1px solid var(--line)}
+.decisions>li::before{content:counter(d);font:600 1.05rem/1.3 var(--f-mono);color:var(--primary);grid-row:span 3}
+.opts{list-style:none;padding:0;margin:4px 0 0;display:grid;gap:5px}
+.opts li{display:flex;gap:10px;align-items:baseline;font-size:15px}
+.opts li::before{content:"";flex:none;width:11px;height:11px;border:1.5px solid var(--line-strong);border-radius:50%;transform:translateY(1px)}
+.opts li.rec::before{border-color:var(--primary);background:radial-gradient(circle,var(--primary) 0 42%,transparent 48%)}
+.opts li.rec em{font-style:normal;font-weight:600;color:var(--primary);font-size:13.5px}
+.why{font-size:14.5px;color:var(--muted)}
+.out{margin:0;padding-left:18px;display:grid;gap:6px;max-width:76ch}
+footer.end{border-top:1px solid var(--line);padding-top:20px;font-size:13.5px;color:var(--muted)}
+
+/* ---------- schermate dell'app ---------- */
+.frame{color-scheme:light;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:var(--r-l);overflow:hidden;font-family:var(--f-ui)}
+.app{min-width:1120px;display:grid;grid-template-rows:auto 1fr;background:var(--bg);font-size:13.5px;line-height:1.45;position:relative;min-height:560px}
+.tb{display:flex;align-items:center;gap:26px;height:48px;padding:0 18px;background:var(--topbar);color:var(--on-topbar)}
+.tb-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px;white-space:nowrap}
+.tb-brand span{font-weight:400;color:var(--on-topbar-muted)}
+.mark{flex:none;width:22px;height:22px;border-radius:var(--r-m);background:var(--primary);display:grid;place-items:center}
+.mark svg{width:16px;height:16px}
+.tb nav{display:flex;align-self:stretch}
+.tb nav span{display:flex;align-items:center;padding:0 12px;color:var(--on-topbar-muted);font-weight:500;border-bottom:2px solid transparent}
+.tb nav span.on{color:var(--on-topbar);border-bottom-color:var(--on-topbar)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tb-rel{height:30px;display:flex;align-items:center;gap:6px;padding:0 10px;border:1px solid var(--topbar-line);border-radius:var(--r-m);font-size:12.5px;color:var(--on-topbar-muted);white-space:nowrap}
+.tb-rel b{font:500 12.5px var(--f-mono);color:var(--on-topbar)}
+.tb-search{height:30px;width:210px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 10px;background:var(--topbar-field);border-radius:var(--r-m);color:var(--on-topbar-muted);font-size:12.5px}
+.tb kbd{font:500 10.5px var(--f-mono);border:1px solid var(--topbar-line);border-radius:var(--r-s);padding:1px 4px;color:var(--on-topbar-muted)}
+.tb-bell{position:relative;width:32px;height:30px;display:grid;place-items:center;border-radius:var(--r-m);color:var(--on-topbar-muted)}
+.tb-bell svg{width:18px;height:18px}
+.tb-bell.on{background:var(--topbar-field);color:var(--on-topbar)}
+.tb-bell b{position:absolute;top:2px;right:1px;min-width:15px;height:15px;padding:0 3px;border-radius:var(--r-s);background:var(--fail);color:var(--on-primary);font:700 9.5px/15px var(--f-ui);text-align:center}
+.tb-user{width:28px;height:28px;border-radius:var(--r-l);background:var(--primary);color:var(--on-primary);display:grid;place-items:center;font:700 11px var(--f-ui)}
+.main{padding:20px 24px 28px;display:grid;gap:18px;align-content:start;min-width:0}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+.ph h4{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+.crumb{font-size:12.5px;color:var(--muted);margin-bottom:2px}
+.meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+.acts{display:flex;gap:8px;align-items:center}
+.btn{height:30px;padding:0 12px;border-radius:var(--r-m);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.pri{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.btn.danger{background:var(--fail);border-color:var(--fail);color:var(--on-primary)}
+.btn.link{border:0;background:none;padding:0;height:auto;color:var(--primary)}
+.btn.dlink{border:0;background:none;padding:0;height:auto;color:var(--fail)}
+.btn.sm{height:26px;padding:0 9px;font-size:12px}
+.btn.icon{padding:0 9px;font-size:15px;line-height:1}
+.sub{font-size:12.5px;color:var(--muted)}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);min-width:0;overflow:hidden}
+.sh-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 14px 10px}
+.sh-head h5{margin:0;font-size:14px;font-weight:700}
+.sh-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--line-soft)}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:var(--r-s);font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.tag.pass{background:var(--pass-weak);color:var(--pass)}
+.tag.fail{background:var(--fail-weak);color:var(--fail)}
+.tag.na{background:var(--na-weak);color:var(--na)}
+.tag.todo{background:var(--todo-weak);color:var(--todo)}
+.tag.info{background:var(--primary-weak);color:var(--primary)}
+.dev{display:inline-block;font:500 11px/18px var(--f-mono);padding:0 5px;border:1px solid var(--line);border-radius:var(--r-s);color:var(--muted);background:var(--surface);white-space:nowrap}
+.id{font:500 12.5px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.new{font-size:10.5px;font-weight:700;color:var(--na);margin-left:6px}
+.tname{font-weight:600;color:var(--ink)}
+.clip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt{width:100%;border-collapse:collapse}
+.mt th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:8px 12px;border-block:1px solid var(--line);background:var(--sunken);white-space:nowrap}
+.sheet>.mt:first-child th{border-top:0}
+.mt td{padding:9px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+.mt tbody tr:last-child td{border-bottom:0}
+.mt .num{text-align:right;font-variant-numeric:tabular-nums}
+.mt tfoot td{font-weight:700;border-top:1px solid var(--line);border-bottom:0}
+.mt tr.hover td{background:var(--sunken)}
+.mt .grp td{font-weight:700;font-size:12.5px;padding-top:12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.mt .grp td small{font-weight:400;color:var(--muted);margin-left:8px;font-size:12px}
+.mt .grp.closed td{font-weight:600;color:var(--muted);padding-block:9px;border-bottom:1px solid var(--line-soft)}
+.row-acts{display:flex;gap:12px;justify-content:flex-end;visibility:hidden}
+.hover .row-acts{visibility:visible}
+.sq{display:inline-flex;gap:3px;vertical-align:middle}
+.sq i{width:11px;height:11px;border-radius:2px;background:var(--surface);border:1px solid var(--line-strong)}
+.sq i.p{background:var(--pass);border-color:var(--pass)}
+.sq i.f{background:var(--fail);border-color:var(--fail)}
+.sq i.n{background:var(--na);border-color:var(--na)}
+.meter{display:flex;height:8px;border-radius:2px;overflow:hidden;background:var(--todo-weak)}
+.meter i{display:block}
+.meter .p{background:var(--pass)} .meter .f{background:var(--fail)} .meter .n{background:var(--na)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.legend b{font-weight:700;color:var(--ink)}
+.legend .lp{color:var(--pass)} .legend .lf{color:var(--fail)} .legend .ln{color:var(--na)}
+.legend .sq{margin-right:4px}
+
+/* dashboard */
+.status{display:grid;grid-template-columns:260px minmax(0,1fr)}
+.status>div{padding:14px 16px;display:grid;gap:6px;align-content:start}
+.status>div+div{border-left:1px solid var(--line-soft)}
+.lbl{font-size:12px;font-weight:600;color:var(--muted)}
+.dash{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.flag{display:flex;gap:8px;align-items:center;padding:0 14px 12px;font-size:12.5px}
+.flag::before{content:"";flex:none;width:10px;height:10px;border-radius:2px;background:var(--na)}
+.cov th.c,.cov td.c{text-align:center;width:92px}
+.cov td:first-child{width:100%;max-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cov td.c{font:500 12.5px var(--f-mono);font-variant-numeric:tabular-nums;border-left:2px solid var(--surface)}
+.cov td.c0{color:var(--line-strong)}
+.cov td.c1{background:var(--cov1)}
+.cov td.c2{background:var(--cov2)}
+.cov td.c3{background:var(--cov3);color:var(--on-primary)}
+.cov tr.empty td:first-child{color:var(--muted)}
+.mk{display:inline-grid;place-items:center;min-width:16px;height:16px;padding:0 3px;margin-left:6px;border-radius:2px;font:700 10px/1 var(--f-ui);color:var(--on-primary);vertical-align:1px}
+.mk.f{background:var(--fail)} .mk.n{background:var(--na)}
+.nplist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line-soft)}
+.nplist li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:2px 8px;padding:10px 14px;border-bottom:1px solid var(--line-soft)}
+.nplist li:last-child{border-bottom:0}
+.nplist b{font-weight:600}
+.nplist span.where{grid-column:2;font-size:12px;color:var(--muted)}
+.nplist p{grid-column:2;font-size:12.5px;margin:0;max-width:none}
+
+/* catalogo */
+.split{display:grid;grid-template-columns:262px minmax(0,1fr);min-height:0}
+.tree{background:var(--surface);border-right:1px solid var(--line);padding:14px 10px;display:grid;gap:10px;align-content:start}
+.tree ul{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+.tree li{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:var(--r-m);font-size:13px}
+.tree li b{font:500 11.5px var(--f-mono);color:var(--muted)}
+.tree li.on{background:var(--primary-weak);color:var(--primary);font-weight:700}
+.tree li.on b{color:var(--primary)}
+.tree li.uc{padding-left:26px;color:var(--muted)}
+.tree li.more{color:var(--muted);font-style:italic}
+.tree li.add{color:var(--primary);font-weight:600;margin-top:6px}
+.tree .caret{display:inline-block;width:12px;color:var(--muted)}
+.inp{height:30px;border:1px solid var(--line-strong);border-radius:var(--r-m);background:var(--surface);padding:0 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);min-width:0}
+.inp.val{color:var(--ink)}
+.inp.mono{font-family:var(--f-mono)}
+.inp .chev{color:var(--muted);font-size:11px}
+.filters{display:flex;gap:10px;align-items:center}
+.cb{display:inline-flex;gap:8px;align-items:center;font-size:13px;white-space:nowrap}
+.cb i{flex:none;width:15px;height:15px;border:1.5px solid var(--line-strong);border-radius:var(--r-s);background:var(--surface)}
+.cb.on i{background:var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat;border-color:var(--primary)}
+
+/* scheda test */
+.two{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:24px;align-items:start}
+.form{padding:18px;display:grid;gap:14px}
+.fld{display:grid;gap:5px;min-width:0}
+.fld>label{font-size:12px;font-weight:600;color:var(--ink)}
+.ta{border:1px solid var(--line-strong);border-radius:var(--r-m);background:var(--surface);padding:8px 10px;line-height:1.5;color:var(--ink);white-space:pre-line}
+.form-foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line-soft);padding-top:12px}
+.side-col{display:grid;gap:10px;align-content:start}
+.side-col h5{margin:0;font-size:13px;font-weight:700}
+.side-col h5+ul{margin-bottom:12px}
+.plain{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.plain li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:start}
+.plain li p{grid-column:1/-1;font-size:12.5px;max-width:none;color:var(--ink)}
+.plain li .sub{grid-column:1/-1}
+
+/* overlay */
+.scrim{position:absolute;inset:48px 0 0;background:var(--scrim)}
+.drawer{position:absolute;top:48px;right:0;bottom:0;width:420px;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow-pop);display:flex;flex-direction:column;z-index:var(--z-pop)}
+.drawer>header{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line-soft)}
+.drawer h5{margin:0;font-size:16px;font-weight:700}
+.drawer .body{padding:16px 18px;display:grid;gap:16px;align-content:start;flex:1}
+.drawer>footer{padding:12px 18px;border-top:1px solid var(--line-soft);display:flex;justify-content:flex-end;gap:8px}
+.cbgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 12px}
+.summary{border-top:1px solid var(--line-soft);padding-top:14px;display:grid;gap:4px}
+.summary b{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.summary b small{font-size:13px;font-weight:400;color:var(--muted)}
+.dlg-stage{background:var(--scrim);padding:36px 24px}
+.dialog{max-width:460px;margin:0 auto;background:var(--surface);border-radius:var(--r-l);box-shadow:var(--shadow-pop);display:grid}
+.dialog>div{padding:20px 22px 16px;display:grid;gap:10px}
+.dialog h5{margin:0;font-size:17px;font-weight:700}
+.dialog p{font-size:13.5px;line-height:1.55;margin:0}
+.dialog footer{padding:12px 22px;border-top:1px solid var(--line-soft);display:flex;justify-content:flex-end;gap:8px}
+
+/* esecuzione */
+.progress{display:grid;gap:7px}
+.progress .meter{height:10px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line)}
+.tabs span{padding:7px 10px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-weight:500}
+.tabs span.on{color:var(--primary);border-color:var(--primary);font-weight:700}
+.tabs span b{font:500 11.5px var(--f-mono);margin-left:5px}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--r-m);background:var(--surface);overflow:hidden}
+.seg span{padding:0 9px;height:26px;display:flex;align-items:center;font-size:11px;font-weight:700;color:var(--muted);border-right:1px solid var(--line-soft);white-space:nowrap}
+.seg span:last-child{border-right:0}
+.seg .p.on{background:var(--pass);color:var(--on-primary)}
+.seg .f.on{background:var(--fail);color:var(--on-primary)}
+.seg .t.on{background:var(--todo);color:var(--on-primary)}
+.seg .n.on{background:var(--na);color:var(--on-primary)}
+.exec tr.focus td{background:var(--primary-weak)}
+.exec tr.open td{background:var(--sunken)}
+.detail{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:16px;margin-top:10px}
+.detail h6{margin:0 0 3px;font-size:12px;font-weight:600;color:var(--muted)}
+.detail p{font-size:12.5px;line-height:1.5;max-width:none;margin:0}
+.notebox{border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--r-m);padding:8px 10px;font-size:12.5px;line-height:1.5}
+.kbar{display:flex;gap:18px;padding:8px 14px;border-top:1px solid var(--line);background:var(--sunken);font-size:12px;color:var(--muted)}
+.kbar kbd{font:600 10.5px var(--f-mono);border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:var(--r-s);padding:1px 5px;margin-right:5px;color:var(--ink);background:var(--surface)}
+.kbar .save{margin-left:auto;color:var(--pass)}
+
+/* report */
+.rep-title{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.rep-title h5{margin:0;font-size:16px;font-weight:700}
+.kv{display:grid;grid-template-columns:150px 1fr 150px 1fr}
+.kv>span{padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+.kv>span:nth-child(odd){background:var(--sunken);font-size:12px;font-weight:600;color:var(--muted)}
+.rep-sec{display:grid;gap:8px;padding:14px 16px;border-top:1px solid var(--line)}
+.rep-sec h6{margin:0;font-size:12.5px;font-weight:700}
+.rep-sec h6 small{font-weight:400;color:var(--muted);margin-left:6px}
+.rep-sec .mt th{border-top:1px solid var(--line)}
+.final{display:grid;grid-template-columns:220px 180px minmax(0,1fr);gap:16px;align-items:start}
+.warn{border:1px solid var(--na);border-radius:var(--r-m);background:var(--na-weak);padding:8px 10px;font-size:12.5px;color:var(--ink)}
+.rev code{font:600 12px var(--f-mono)}
+
+/* notifiche */
+.pop{position:absolute;top:52px;right:58px;width:410px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--shadow-pop);z-index:var(--z-pop)}
+.pop-head{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 6px}
+.pop-head b{font-size:14px}
+.pop .tabs{padding:0 8px}
+.ntf{list-style:none;margin:0;padding:0}
+.ntf li{display:grid;grid-template-columns:8px 112px minmax(0,1fr);gap:10px;align-items:start;padding:11px 14px;border-bottom:1px solid var(--line-soft)}
+.ntf li::before{content:"";width:7px;height:7px;border-radius:50%;margin-top:7px}
+.ntf li.unread::before{background:var(--primary)}
+.ntf li div{display:grid;gap:2px}
+.ntf li b{font-weight:600;font-size:13px}
+.ntf li:not(.unread) b{font-weight:400;color:var(--muted)}
+.ntf li span.sub{font-size:12px}
+.pop-foot{padding:10px 14px;text-align:center}
+</style>
+
+<header class="top">
+  <div class="top-in gut">
+    <div class="brand">MyoLogic Test Manager<span>Piano e mockup, bozza da revisionare</span></div>
+    <nav aria-label="Sezioni">
+      <a href="#analisi">Analisi</a><a href="#modello">Modello dati</a><a href="#funzioni">Funzioni</a><a href="#mockup">Mockup</a><a href="#piano">Piano</a><a href="#decisioni">Decisioni</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap gut">
+
+  <section class="hero" id="intro">
+    <p class="dateline">Piano di progetto del 23 ottobre 2026</p>
+    <h1>Gli Unit Test di MyoLogic Pro in un unico posto</h1>
+    <p class="lead">Oggi catalogo, esiti e report vivono nel file Excel <span class="mono">MyoLogic Pro – Unit Test v.2.1_rev00</span>, dove lo stesso elenco di 264 test è copiato in 5 fogli. Il software proposto tiene il catalogo una volta sola, registra gli esiti per sessione di test e calcola da solo il report di rilascio. Ogni elemento si può creare, modificare ed eliminare.</p>
+    <dl class="facts">
+      <div><dt>test nel catalogo</dt><dd>264</dd></div>
+      <div><dt>unità del software</dt><dd>32</dd></div>
+      <div><dt>casi d'uso</dt><dd>148</dd></div>
+      <div><dt>configurazioni testate</dt><dd>4</dd></div>
+      <div><dt>revisioni, v1.0 → v.2.1_rev00</dt><dd>32</dd></div>
+    </dl>
+  </section>
+
+  <section id="analisi">
+    <div class="intro">
+      <h2>Cosa c'è oggi nel file</h2>
+      <p class="muted">Il file ha 7 fogli. Quattro sono copie identiche del catalogo (colonne A–K) con in più le colonne ESITO e NOTE per una configurazione hardware.</p>
+    </div>
+    <div class="cols">
+      <div>
+        <ul class="rows">
+          <li><code>Cover&amp;History</code><span>Autore, 2 approvatori, storico di 32 revisioni dal 15/06/2020 al 20/09/2026</span></li>
+          <li><code>Unit Test</code><span>Catalogo master, 264 righe, senza esiti</span></li>
+          <li><code>AH03 + rotatore + PRISM + Pulse</code><span>Copia del catalogo + ESITO/NOTE</span></li>
+          <li><code>AH03 + coaxial plug 6 bande + 2</code><span>Copia del catalogo + ESITO/NOTE</span></li>
+          <li><code>Conn.Remota ProiOS-AH02AH03+rot</code><span>Copia del catalogo + ESITO/NOTE</span></li>
+          <li><code>Conn.Remota ProAndroid-AH02AH03</code><span>Copia del catalogo + ESITO/NOTE</span></li>
+          <li><code>Esito Test</code><span>Riepilogo finale scritto a mano</span></li>
+        </ul>
+        <p class="note">Gerarchia: 32 unità del software → 148 casi d'uso → 264 test. Ogni test ha Device, ID Test, Nome Test, Descrizione test e Descrizione operazioni. Unità e Caso d'uso sono celle unite su più righe.</p>
+      </div>
+      <div>
+        <h3>Cosa non funziona e il software risolve</h3>
+        <ul class="rows issues">
+          <li><b>5×</b><span>Lo stesso catalogo è copiato in 5 fogli. Correggere un test vuol dire modificarlo 5 volte, e nulla garantisce che le copie restino uguali.</span></li>
+          <li><b>95</b><span>test senza ID. Gli ID 103, 152 e 167 sono usati più volte (167 tre volte).</span></li>
+          <li><b>6</b><span>modi diversi di scrivere l'esito, per esempio <span class="mono">"NOT AVAILABLE "</span> con uno spazio in fondo e <span class="mono">"NOT PASSED (lato grafico)"</span>. 19 esiti sono vuoti.</span></li>
+          <li><b>28</b><span>test senza dispositivo indicato; <span class="mono">" PRISM"</span> compare con uno spazio davanti.</span></li>
+          <li><b>3</b><span>coppie di unità con nomi quasi uguali, per esempio "Gestione Dispostiivi" e "Gestione Dispositivi".</span></li>
+          <li><b>12</b><span>esiti NOT PASSED nei fogli, mentre Esito Test riporta "Tutti i test sono PASSED" e la versione v.2.0.1 per il test della v2.1. Il riepilogo non è collegato ai dati.</span></li>
+          <li><b>6</b><span>colonne (R–W: Esito Demo, Note Test RUSSO, Note Test ITA…) vuote in tutti i fogli.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="modello">
+    <div class="intro">
+      <h2>Come si organizza nel software</h2>
+      <p class="muted">Ogni parte del file diventa un elemento con la sua schermata. Il catalogo esiste una sola volta; le configurazioni diventano sessioni di test che puntano allo stesso catalogo.</p>
+    </div>
+    <div class="tscroll">
+      <table class="tbl">
+        <thead><tr><th>Nel file Excel</th><th>Nel software</th></tr></thead>
+        <tbody>
+          <tr><td>Foglio <span class="mono">Unit Test</span>, colonne A–K</td><td><b>Catalogo</b>: Unità → Casi d'uso → Test. Unico per tutte le sessioni.</td></tr>
+          <tr><td>Elenco a tendina "Device"</td><td><b>Dispositivi</b> (AH02, AH03, AK01, PRISM, MyoUnit, PULSE, Demo Unit). Un test può riguardarne più di uno.</td></tr>
+          <tr><td>Nomi dei 4 fogli di configurazione</td><td><b>Configurazioni</b> hardware/piattaforma, riutilizzabili da una release all'altra.</td></tr>
+          <tr><td>Colonne ESITO e NOTE dei 4 fogli</td><td><b>Sessioni di test</b>: release + configurazione, con un <b>risultato</b> (esito e nota) per ogni test.</td></tr>
+          <tr><td>Revision History in <span class="mono">Cover&amp;History</span></td><td><b>Release</b>: versione, data, autore, descrizione delle modifiche, approvatori.</td></tr>
+          <tr><td>Foglio <span class="mono">Esito Test</span></td><td><b>Report di release</b>, calcolato dalle sessioni. Motivazione, prossime azioni ed esito finale restano testi modificabili.</td></tr>
+          <tr><td>Colonne R–W</td><td class="cond">Non migrate: sono vuote in tutti i fogli.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="er">
+<pre class="mermaid">
+erDiagram
+  UNITA ||--o{ CASO_USO : contiene
+  CASO_USO ||--o{ TEST : contiene
+  TEST }o--o{ DISPOSITIVO : "riguarda"
+  RELEASE ||--o{ SESSIONE : "validata da"
+  CONFIGURAZIONE ||--o{ SESSIONE : "usata in"
+  SESSIONE ||--o{ RISULTATO : registra
+  TEST ||--o{ RISULTATO : riceve
+  RELEASE ||--o| REPORT : chiude
+  SESSIONE ||--o{ NOTIFICA : genera
+  RELEASE ||--o{ NOTIFICA : genera
+  REPORT {
+    enum stato "bozza, da approvare, approvato"
+  }
+  NOTIFICA {
+    enum evento "NOT PASSED, sessione chiusa, report da approvare"
+    string destinatario
+    string link
+    bool letta
+    datetime data
+  }
+  TEST {
+    int id_test
+    string nome
+    text descrizione
+    text operazioni
+    bool archiviato
+  }
+  RISULTATO {
+    enum esito "PASSED, NOT PASSED, NOT TESTED, NOT AVAILABLE"
+    text nota
+    string eseguito_da
+    datetime data
+  }
+  RELEASE {
+    string versione "es. v.2.1_rev00"
+    date data
+    string autore
+    text modifiche
+  }
+  SESSIONE {
+    string tester
+    date data
+    enum stato "in corso, chiusa"
+  }
+</pre>
+    </div>
+  </section>
+
+  <section id="funzioni">
+    <div class="intro">
+      <h2>Creazione, modifica, cancellazione</h2>
+      <p class="muted">Nessuna cancellazione fa sparire esiti già registrati. Un test con risultati viene archiviato: esce dalle nuove sessioni ma resta nei report passati. Ogni eliminazione chiede conferma.</p>
+    </div>
+    <div class="tscroll">
+      <table class="tbl">
+        <thead><tr><th>Elemento</th><th>Crea</th><th>Modifica</th><th>Elimina</th></tr></thead>
+        <tbody>
+          <tr><td>Unità del software</td><td>Sì</td><td>Rinomina, riordina</td><td class="cond">Solo se non contiene casi d'uso</td></tr>
+          <tr><td>Caso d'uso</td><td>Sì</td><td>Rinomina, sposta in un'altra unità</td><td class="cond">Solo se non contiene test</td></tr>
+          <tr><td>Test</td><td>Sì, anche duplicando</td><td>Tutti i campi, dispositivi compresi</td><td class="cond">Archiviato se ha esiti, altrimenti eliminato</td></tr>
+          <tr><td>Dispositivo</td><td>Sì</td><td>Nome</td><td class="cond">Solo se nessun test lo usa</td></tr>
+          <tr><td>Configurazione</td><td>Sì</td><td>Nome, descrizione, dispositivi</td><td class="cond">Solo se non ha sessioni</td></tr>
+          <tr><td>Release</td><td>Sì</td><td>Versione, data, autore, modifiche, approvatori</td><td class="cond">Solo se non ha sessioni</td></tr>
+          <tr><td>Sessione di test</td><td>Sì, da release + configurazione</td><td>Tester, stato, test inclusi</td><td class="cond">Con conferma: elimina anche i suoi esiti</td></tr>
+          <tr><td>Esito di un test</td><td class="cond">Dalla sessione</td><td>Esito e nota</td><td class="cond">Si riporta a NOT TESTED</td></tr>
+          <tr><td>Report di release</td><td class="cond">Generato</td><td>Motivazione, prossime azioni, esito finale; invio agli approvatori</td><td class="cond">—</td></tr>
+          <tr><td>Notifica</td><td class="cond">Automatica, da 3 eventi</td><td>Segna come letta</td><td class="cond">Ognuno può eliminare le proprie</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="mockup">
+    <div class="intro">
+      <h2>Le schermate</h2>
+      <p class="muted">Sette schermate disegnate con la palette indicata: sfondo <span class="mono">#E9EFF4</span>, primario <span class="mono">#254A6A</span>, secondario <span class="mono">#292D38</span> per la barra superiore e il testo. Numeri, nomi dei test e note vengono dal file; tester, orari e stati delle sessioni sono di esempio. Su schermi stretti ogni schermata scorre in orizzontale.</p>
+    </div>
+
+    <div class="shots">
+
+      <!-- 1 DASHBOARD -->
+      <figure class="shot">
+        <figcaption>
+          <h3>Mockup 1 · Dashboard della release</h3>
+          <p class="muted">La prima cosa da sapere è cosa manca. La matrice mostra quanti test sono PASSED in ogni unità e sessione, e mette in evidenza le unità mai testate. A destra, i NOT PASSED ancora aperti, raggruppati per test.</p>
+          <span class="path">/dashboard</span>
+        </figcaption>
+        <div class="frame"><div class="scroller"><div class="app" data-nav="dash">
+          <div class="main">
+            <div class="ph">
+              <div><div class="crumb">Dashboard</div><h4>Release v.2.1_rev00</h4><div class="meta">Rilasciata il 20/09/2026 da G. D'Amico · terza posizione del pollice, animazioni Handshake, Point Grip e Pinch</div></div>
+              <div class="acts"><span class="btn">Apri report</span><span class="btn pri">Nuova sessione</span></div>
+            </div>
+            <div class="sheet status">
+              <div><span class="lbl">Esito calcolato</span><div><span class="tag na">NON PRONTA</span></div><span class="sub">12 NOT PASSED su 8 test da chiudere o motivare</span></div>
+              <div><span class="lbl">Esiti della release · 4 sessioni × 264 test = 1.056</span>
+                <div class="meter"><i class="p" style="width:31.7%"></i><i class="f" style="width:1.14%"></i><i class="n" style="width:.38%"></i></div>
+                <div class="legend"><span><b class="lp">335</b> PASSED</span><span><b class="lf">12</b> NOT PASSED</span><span><b class="ln">4</b> NOT AVAILABLE</span><span><b>705</b> NOT TESTED</span></div>
+              </div>
+            </div>
+            <div class="dash">
+              <div class="sheet">
+                <div class="sh-head"><h5>Copertura per unità</h5><span class="sub">test PASSED sul totale dell'unità</span></div>
+                <p class="flag">6 delle 12 unità più grandi (94 test) non hanno esiti in nessuna sessione.</p>
+                <table class="mt cov">
+                  <thead><tr><th>Unità del software</th><th class="num">Test</th><th class="c">Rotatore+PRISM</th><th class="c">Coaxial</th><th class="c">Remota iOS</th><th class="c">Remota Android</th></tr></thead>
+                  <tbody>
+                    <tr><td>Calibrazione e Test del dispositivo</td><td class="num">47</td><td class="c c3">39<span class="mk f">1</span></td><td class="c c2">22<span class="mk f">1</span></td><td class="c c3">36<span class="mk n">2</span></td><td class="c c3">33<span class="mk f">1</span></td></tr>
+                    <tr class="empty"><td>Gestione account (TO)</td><td class="num">23</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td></tr>
+                    <tr class="empty"><td>Aggiornamento Dispositivi</td><td class="num">21</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td></tr>
+                    <tr><td>Diagnostica Adam's Hand</td><td class="num">18</td><td class="c c3">15</td><td class="c c3">13</td><td class="c c3">15</td><td class="c c3">15</td></tr>
+                    <tr class="empty"><td>Gestione account (DIS)</td><td class="num">17</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td></tr>
+                    <tr><td>Visualizzazione segnali EMG</td><td class="num">14</td><td class="c c3">11</td><td class="c c2">9</td><td class="c c3">11<span class="mk f">1</span></td><td class="c c3">10<span class="mk f">1</span></td></tr>
+                    <tr class="empty"><td>Gestione Pazienti (TO)</td><td class="num">12</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td></tr>
+                    <tr class="empty"><td>Gestione Dispositivi</td><td class="num">11</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td></tr>
+                    <tr class="empty"><td>Gestione Tecnico Ortopedico (DIS)</td><td class="num">10</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td><td class="c c0">—</td></tr>
+                    <tr><td>Visualizzazione informazioni dispositivo</td><td class="num">10</td><td class="c c1">3<span class="mk f">1</span></td><td class="c c1">2</td><td class="c c1">3<span class="mk f">1</span></td><td class="c c2">4</td></tr>
+                    <tr><td>Impostazioni Adam's Hand</td><td class="num">10</td><td class="c c3">8</td><td class="c c3">8</td><td class="c c3">7<span class="mk f">1</span></td><td class="c c3">8</td></tr>
+                    <tr><td>Home Dispositivo</td><td class="num">8</td><td class="c c2">5</td><td class="c c2">5</td><td class="c c2">5</td><td class="c c2">4</td></tr>
+                  </tbody>
+                </table>
+                <div class="sh-foot"><span class="btn link">Mostra le altre 20 unità</span><span class="legend"><span><span class="mk f" style="margin:0 4px 0 0">1</span>NOT PASSED</span><span><span class="mk n" style="margin:0 4px 0 0">2</span>NOT AVAILABLE</span></span></div>
+              </div>
+              <div class="sheet">
+                <div class="sh-head"><h5>NOT PASSED aperti</h5><span class="sub">8 test · 12 esiti</span></div>
+                <ul class="nplist">
+                  <li><span class="id">91</span><b>Regolare il gain degli elettrodi</b><span class="where">Remota iOS · Remota Android</span><p>In connessione remota il tasto "reset" non ripristina canali e gain a 1.</p></li>
+                  <li><span class="id">150</span><b>Visualizza informazioni batteria</b><span class="where">Remota iOS · Remota Android</span><p>Temperatura −116°.</p></li>
+                  <li><span class="id">217</span><b>Visualizza Info Dispositivo – PRISM</b><span class="where">Rotatore+PRISM · Remota iOS</span><p>Non si legge tutto il seriale del PRISM: manca l'ultima cifra.</p></li>
+                  <li><span class="id">163</span><b>Impostazioni Feedback Adam's Hand</b><span class="where">Remota iOS · problema grafico</span><p>Quadrato blu sotto lo slider VIBRATION dopo una modifica da remoto.</p></li>
+                  <li><span class="id">214</span><b>Calibration – Modalità Standby attiva</b><span class="where">Rotatore+PRISM · Coaxial</span><p>Passano alcuni secondi prima che vada in standby.</p></li>
+                </ul>
+                <div class="sh-foot"><span class="btn link">Tutti gli 8 test</span></div>
+              </div>
+            </div>
+          </div>
+        </div></div></div>
+      </figure>
+
+      <!-- 2 CATALOGO -->
+      <figure class="shot">
+        <figcaption>
+          <h3>Mockup 2 · Catalogo test</h3>
+          <p class="muted">Un solo catalogo per tutte le sessioni. A sinistra l'albero Unità → Caso d'uso, a destra i test dell'unità con l'esito nelle 4 sessioni della release. Le azioni compaiono sulla riga sotto il mouse. "nuovo" segna gli ID assegnati durante l'import (decisione 4).</p>
+          <span class="path">/catalogo/calibrazione-e-test-del-dispositivo</span>
+        </figcaption>
+        <div class="frame"><div class="scroller"><div class="app" data-nav="cat">
+          <div class="split">
+            <div class="tree">
+              <div class="inp">Filtra unità e casi d'uso…</div>
+              <ul>
+                <li>Tutte le unità <b>264</b></li>
+                <li class="on"><span><span class="caret">▾</span>Calibrazione e Test del dispositivo</span><b>47</b></li>
+                <li class="uc">Calibra Adam's Hand – DUAL SITE <b>6</b></li>
+                <li class="uc">Modalità Commutazione Polso <b>1</b></li>
+                <li class="uc">Verifica Commutazione Polso – STANDARD <b>1</b></li>
+                <li class="uc">Calibra Adam's Hand – SINGLE SITE <b>4</b></li>
+                <li class="uc more">altri 15 casi d'uso</li>
+                <li><span><span class="caret">▸</span>Gestione account (TO)</span><b>23</b></li>
+                <li><span><span class="caret">▸</span>Aggiornamento Dispositivi</span><b>21</b></li>
+                <li><span><span class="caret">▸</span>Diagnostica Adam's Hand</span><b>18</b></li>
+                <li><span><span class="caret">▸</span>Gestione account (DIS)</span><b>17</b></li>
+                <li><span><span class="caret">▸</span>Visualizzazione segnali EMG</span><b>14</b></li>
+                <li><span><span class="caret">▸</span>Gestione Pazienti (TO)</span><b>12</b></li>
+                <li class="more">altre 25 unità</li>
+                <li class="add">+ Nuova unità</li>
+              </ul>
+            </div>
+            <div class="main">
+              <div class="ph">
+                <div><div class="crumb">Catalogo</div><h4>Calibrazione e Test del dispositivo</h4><div class="meta">Unità del software · 47 test in 19 casi d'uso</div></div>
+                <div class="acts"><span class="btn">Modifica unità</span><span class="btn">Nuovo caso d'uso</span><span class="btn pri">Nuovo test</span></div>
+              </div>
+              <div class="filters">
+                <div class="inp" style="flex:1">Cerca per ID, nome o descrizione…</div>
+                <div class="inp val" style="width:200px">Dispositivo: tutti <span class="chev">▾</span></div>
+                <span class="cb"><i></i>Solo con NOT PASSED</span>
+              </div>
+              <div class="sheet">
+                <table class="mt">
+                  <thead><tr><th style="width:92px">ID</th><th>Nome test</th><th>Dispositivi</th><th>Esiti v.2.1 <span style="font-weight:400">(rot · coax · iOS · and)</span></th><th style="width:170px"></th></tr></thead>
+                  <tbody>
+                    <tr class="grp"><td colspan="5">Calibra Adam's Hand – DUAL SITE<small>6 test</small></td></tr>
+                    <tr><td class="id">92</td><td class="tname">Calibra Adam's Hand – Dual Site</td><td><span class="dev">AH03</span></td><td><span class="sq"><i class="p"></i><i class="p"></i><i></i><i></i></span></td><td><div class="row-acts"><span class="btn link">Modifica</span><span class="btn link">Duplica</span><span class="btn link">Altro</span></div></td></tr>
+                    <tr class="hover"><td class="id">185<span class="new">nuovo</span></td><td class="tname">Calibra Adam's Hand – Dual Site con PRISM</td><td><span class="dev">PRISM</span></td><td><span class="sq"><i class="p"></i><i></i><i class="p"></i><i class="f"></i></span></td><td><div class="row-acts"><span class="btn link">Modifica</span><span class="btn link">Duplica</span><span class="btn link">Altro</span></div></td></tr>
+                    <tr><td class="id">93</td><td class="tname">Calibra Adam's Hand Dual Site – Procedura annullata</td><td><span class="dev">AH03</span></td><td><span class="sq"><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i></span></td><td><div class="row-acts"><span class="btn link">Modifica</span></div></td></tr>
+                    <tr><td class="id">186<span class="new">nuovo</span></td><td class="tname">Calibra Adam's Hand Dual Site – Procedura annullata da pulsante</td><td><span class="dev">AH03</span></td><td><span class="sq"><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i></span></td><td><div class="row-acts"><span class="btn link">Modifica</span></div></td></tr>
+                    <tr><td class="id">94</td><td class="tname">Calibrazione con Demo Unit con rotatore di polso</td><td><span class="dev">AH02</span> <span class="dev">AK01</span> <span class="dev">AH03</span></td><td><span class="sq"><i></i><i></i><i></i><i></i></span></td><td><div class="row-acts"><span class="btn link">Modifica</span></div></td></tr>
+                    <tr><td class="id">187<span class="new">nuovo</span></td><td class="tname">Calibrazione con polso installato su PRISM</td><td><span class="dev">PRISM</span></td><td><span class="sq"><i class="p"></i><i></i><i></i><i></i></span></td><td><div class="row-acts"><span class="btn link">Modifica</span></div></td></tr>
+                    <tr class="grp"><td colspan="5">Modalità Commutazione Polso<small>1 test</small></td></tr>
+                    <tr><td class="id">102</td><td class="tname">Modalità Commutazione Rotatore POLSO</td><td><span class="dev">AH02</span> <span class="dev">AK01</span> <span class="dev">AH03</span> <span class="dev">PRISM</span></td><td><span class="sq"><i class="p"></i><i></i><i class="p"></i><i class="p"></i></span></td><td><div class="row-acts"><span class="btn link">Modifica</span></div></td></tr>
+                    <tr class="grp closed"><td colspan="5">▸ Verifica Modalità Commutazione Polso – STANDARD<small>1 test</small></td></tr>
+                    <tr class="grp closed"><td colspan="5">▸ Calibra Adam's Hand – SINGLE SITE<small>4 test</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="legend"><span><span class="sq"><i class="p"></i></span>PASSED</span><span><span class="sq"><i class="f"></i></span>NOT PASSED</span><span><span class="sq"><i class="n"></i></span>NOT AVAILABLE</span><span><span class="sq"><i></i></span>NOT TESTED</span></div>
+            </div>
+          </div>
+        </div></div></div>
+      </figure>
+
+      <!-- 3 SCHEDA TEST -->
+      <figure class="shot">
+        <figcaption>
+          <h3>Mockup 3 · Scheda test: modifica ed eliminazione</h3>
+          <p class="muted">Tutti i campi del test sono modificabili; unità e caso d'uso si scelgono da elenco o si creano al volo. Accanto, gli esiti del test nella release e lo storico delle modifiche (decisione 3). Eliminare un test con esiti lo archivia, come mostra la finestra 3b.</p>
+          <span class="path">/catalogo/test/163</span>
+        </figcaption>
+        <div class="frame"><div class="scroller"><div class="app" data-nav="cat">
+          <div class="main">
+            <div class="ph">
+              <div><div class="crumb">Catalogo / Impostazioni Adam's Hand / Impostazioni Feedback Adam's Hand</div><h4><span class="id" style="font-size:17px;margin-right:8px">163</span>Impostazioni Feedback Adam's Hand</h4></div>
+              <div class="acts"><span class="sub">Modifiche non salvate</span><span class="btn">Annulla</span><span class="btn pri">Salva modifiche</span><span class="btn icon" aria-label="Altre azioni">⋯</span></div>
+            </div>
+            <div class="two">
+              <div class="sheet form">
+                <div style="display:grid;grid-template-columns:100px 1fr 1fr;gap:12px">
+                  <div class="fld"><label>ID test</label><div class="inp val mono">163</div></div>
+                  <div class="fld"><label>Unità del software</label><div class="inp val">Impostazioni Adam's Hand <span class="chev">▾</span></div></div>
+                  <div class="fld"><label>Caso d'uso</label><div class="inp val">Impostazioni Feedback Adam's Hand <span class="chev">▾</span></div></div>
+                </div>
+                <div class="fld"><label>Nome test</label><div class="inp val">Impostazioni Feedback Adam's Hand</div></div>
+                <div class="fld"><label>Dispositivi</label>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px 18px"><span class="cb on"><i></i>AH02</span><span class="cb on"><i></i>AK01</span><span class="cb on"><i></i>AH03</span><span class="cb"><i></i>PRISM</span><span class="cb"><i></i>MyoUnit</span><span class="cb"><i></i>PULSE</span><span class="cb"><i></i>Demo Unit</span></div></div>
+                <div class="fld"><label>Descrizione test</label><div class="ta">Permette di abilitare/disabilitare i feedback restituiti dalla mano protesica:
+Vibrazione (Feedback Aptico)
+Buzzer (Feedback Acustico)
+LED (Feedback Visivo)</div></div>
+                <div class="fld"><label>Descrizione operazioni</label><div class="ta">Dalla schermata "Informazioni" l'applicazione visualizza tre switch relativi ai feedback restituiti da Adam's Hand. L'utente attiva/disattiva i feedback Vibrazione, Buzzer, LED.</div></div>
+                <div class="form-foot"><span class="sub">Importato il 23/10/2026 dalla riga 230 del file Excel</span><span class="btn dlink">Elimina test…</span></div>
+              </div>
+              <div class="side-col">
+                <h5>Esiti in v.2.1_rev00</h5>
+                <ul class="plain">
+                  <li><span>AH03 + rotatore + PRISM + Pulse</span><span class="tag pass">PASSED</span></li>
+                  <li><span>AH03 + coaxial plug 6 bande + 2</span><span class="tag pass">PASSED</span></li>
+                  <li><span>Conn. Remota Pro → iOS</span><span class="tag fail">NOT PASSED</span><p>Problema grafico. Dopo aver modificato i feedback dall'iPad in connessione remota, su iOS compare un quadrato blu sotto lo slider VIBRATION.</p></li>
+                  <li><span>Conn. Remota Pro → Android</span><span class="tag pass">PASSED</span></li>
+                </ul>
+                <h5>Storico modifiche</h5>
+                <ul class="plain">
+                  <li><span>Creato dall'import del file Excel</span><span class="sub" style="grid-column:auto">23/10/2026</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div></div></div>
+        <div class="pair">
+          <div class="frame"><div class="dlg-stage">
+            <div class="dialog" role="presentation">
+              <div>
+                <h5>Eliminare il test 163?</h5>
+                <p>Il test ha esiti registrati in 4 sessioni. Per non perdere lo storico verrà <b>archiviato</b>: non comparirà nelle nuove sessioni, ma resterà nei report delle release passate.</p>
+                <p class="sub">Un test senza esiti viene invece eliminato definitivamente.</p>
+              </div>
+              <footer><span class="btn">Annulla</span><span class="btn danger">Archivia test</span></footer>
+            </div>
+          </div></div>
+          <div style="display:grid;gap:8px">
+            <h3>3b · Conferma eliminazione</h3>
+            <p class="muted">Le stesse regole valgono per gli altri elementi. Un'unità o un caso d'uso si eliminano solo se sono vuoti, e la finestra propone di spostarne prima il contenuto. Una sessione si può eliminare con i suoi esiti, ma la conferma dice quanti ne verranno cancellati.</p>
+          </div>
+        </div>
+      </figure>
+
+      <!-- 4 SESSIONI -->
+      <figure class="shot">
+        <figcaption>
+          <h3>Mockup 4 · Sessioni di test e nuova sessione</h3>
+          <p class="muted">Una sessione è una release provata su una configurazione hardware, l'equivalente di un foglio di configurazione nel file. I test inclusi si scelgono dai dispositivi in prova, così quelli che non riguardano la configurazione non finiscono tra i NOT TESTED.</p>
+          <span class="path">/sessioni/nuova</span>
+        </figcaption>
+        <div class="frame"><div class="scroller"><div class="app" data-nav="ses">
+          <div class="main">
+            <div class="ph">
+              <div><div class="crumb">Sessioni</div><h4>Sessioni di test · v.2.1_rev00</h4></div>
+              <div class="acts"><span class="btn pri">Nuova sessione</span></div>
+            </div>
+            <div class="sheet">
+              <table class="mt">
+                <thead><tr><th>Configurazione</th><th>Dispositivi</th><th class="num">Test</th><th style="width:220px">Avanzamento</th><th>Stato</th></tr></thead>
+                <tbody>
+                  <tr><td class="tname">AH03 + rotatore + PRISM + Pulse</td><td><span class="dev">AH03</span> <span class="dev">PRISM</span> <span class="dev">PULSE</span></td><td class="num">264</td><td><div class="meter"><i class="p" style="width:36%"></i><i class="f" style="width:1.1%"></i></div></td><td><span class="tag todo">IN CORSO</span></td></tr>
+                  <tr><td class="tname">AH03 + coaxial plug 6 bande + 2</td><td><span class="dev">AH03</span></td><td class="num">264</td><td><div class="meter"><i class="p" style="width:25%"></i><i class="f" style="width:.4%"></i></div></td><td><span class="tag info">CHIUSA</span></td></tr>
+                  <tr><td class="tname">Conn. Remota Pro → iOS · AH02/AH03 + rotatore</td><td><span class="dev">AH02</span> <span class="dev">AH03</span></td><td class="num">264</td><td><div class="meter"><i class="p" style="width:33.3%"></i><i class="f" style="width:1.9%"></i><i class="n" style="width:.8%"></i></div></td><td><span class="tag todo">IN CORSO</span></td></tr>
+                  <tr><td class="tname">Conn. Remota Pro → Android · AH02/AH03</td><td><span class="dev">AH02</span> <span class="dev">AH03</span></td><td class="num">264</td><td><div class="meter"><i class="p" style="width:32.6%"></i><i class="f" style="width:1.1%"></i><i class="n" style="width:.8%"></i></div></td><td><span class="tag todo">IN CORSO</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="scrim"></div>
+          <div class="drawer">
+            <header><h5>Nuova sessione di test</h5><span class="btn link">Chiudi</span></header>
+            <div class="body">
+              <div class="fld"><label>Release</label><div class="inp val mono">v.2.1_rev00 <span class="chev">▾</span></div></div>
+              <div class="fld"><label>Configurazione</label><div class="inp val">AH03 + rotatore + PRISM + Pulse <span class="chev">▾</span></div><span class="btn link" style="justify-self:start;font-size:12.5px">Crea una nuova configurazione</span></div>
+              <div class="fld"><label>Dispositivi in prova</label>
+                <div class="cbgrid"><span class="cb"><i></i>AH02</span><span class="cb"><i></i>AK01</span><span class="cb on"><i></i>AH03</span><span class="cb on"><i></i>PRISM</span><span class="cb on"><i></i>PULSE</span><span class="cb"><i></i>MyoUnit</span><span class="cb"><i></i>Demo Unit</span></div></div>
+              <div class="fld"><label>Tester</label><div class="inp val">Gianluca D'Amico <span class="chev">▾</span></div></div>
+              <div class="summary">
+                <b>252 <small>test su 264</small></b>
+                <span class="sub">224 riguardano i dispositivi scelti; 28 non hanno un dispositivo indicato e sono inclusi per sicurezza. Dopo la creazione puoi togliere singoli test.</span>
+              </div>
+            </div>
+            <footer><span class="btn">Annulla</span><span class="btn pri">Crea sessione</span></footer>
+          </div>
+        </div></div></div>
+      </figure>
+
+      <!-- 5 ESECUZIONE -->
+      <figure class="shot">
+        <figcaption>
+          <h3>Mockup 5 · Esecuzione di una sessione</h3>
+          <p class="muted">La schermata usata di più. L'esito si imposta con un clic o con un tasto, la nota si scrive sotto il test e tutto si salva da solo. Aprendo un test si leggono descrizione e operazioni senza cambiare foglio. "NOT PASSED (lato grafico)" diventa NOT PASSED con l'etichetta "Problema grafico".</p>
+          <span class="path">/sessioni/ios-ah02-ah03-rotatore</span>
+        </figcaption>
+        <div class="frame"><div class="scroller"><div class="app" data-nav="ses">
+          <div class="main">
+            <div class="ph">
+              <div><div class="crumb">Sessioni / v.2.1_rev00</div><h4>Conn. Remota Pro → iOS · AH02/AH03 + rotatore</h4><div class="meta">AH02, AH03 · tester G. D'Amico · avviata il 15/09/2026</div></div>
+              <div class="acts"><span class="btn">Esporta foglio</span><span class="btn">Chiudi sessione</span></div>
+            </div>
+            <div class="progress">
+              <div class="meter"><i class="p" style="width:33.3%"></i><i class="f" style="width:1.9%"></i><i class="n" style="width:.8%"></i></div>
+              <div class="legend"><span><b class="lp">88</b> PASSED</span><span><b class="lf">5</b> NOT PASSED</span><span><b class="ln">2</b> NOT AVAILABLE</span><span><b>169</b> da eseguire</span><span>su 264 test</span></div>
+            </div>
+            <div class="filters" style="justify-content:space-between">
+              <div class="tabs"><span>Tutti<b>264</b></span><span class="on">Da eseguire e falliti<b>174</b></span><span>NOT PASSED<b>5</b></span><span>Con note<b>10</b></span></div>
+              <div class="inp" style="width:240px">Cerca test…</div>
+            </div>
+            <div class="sheet">
+              <table class="mt exec">
+                <tbody>
+                  <tr class="grp"><td colspan="3">Impostazioni Adam's Hand<small>10 test · 7 PASSED · 1 NOT PASSED</small></td></tr>
+                  <tr class="focus"><td class="id" style="width:72px">160</td><td><div class="tname">Reset impostazioni di Fabbrica</div><div class="sub">Reset dati di Fabbrica · AH02, AK01, AH03</div></td><td style="width:300px;text-align:right"><span class="seg"><span class="p">PASSED</span><span class="f">NOT PASSED</span><span class="t on">NOT TESTED</span><span class="n">N/A</span></span></td></tr>
+                  <tr><td class="id">161</td><td><div class="tname">Reset Impostazioni di Fabbrica – Abort</div><div class="sub">Reset dati di Fabbrica · AH02, AK01, AH03</div></td><td style="text-align:right"><span class="seg"><span class="p">PASSED</span><span class="f">NOT PASSED</span><span class="t on">NOT TESTED</span><span class="n">N/A</span></span></td></tr>
+                  <tr class="open"><td class="id" style="vertical-align:top;padding-top:12px">163</td><td>
+                    <div style="display:flex;gap:10px;align-items:center"><span class="tname">Impostazioni Feedback Adam's Hand</span><span class="tag todo">Problema grafico</span></div>
+                    <div class="sub">Impostazioni Feedback Adam's Hand · AH02, AK01, AH03</div>
+                    <div class="detail">
+                      <div><h6>Descrizione test</h6><p>Abilitare/disabilitare i feedback della mano protesica: Vibrazione (aptico), Buzzer (acustico), LED (visivo).</p></div>
+                      <div><h6>Operazioni</h6><p>Dalla schermata "Informazioni" l'app mostra tre switch per i feedback di Adam's Hand. L'utente attiva/disattiva Vibrazione, Buzzer, LED.</p></div>
+                      <div><h6>Nota</h6><div class="notebox">Dopo aver modificato dei feedback dall'iPad in connessione remota, ho visto su iOS nel menu Feedback a VIBRATION un quadrato blu sotto lo slider (non so se c'era già prima della connessione remota).</div></div>
+                    </div>
+                  </td><td style="vertical-align:top;padding-top:12px;text-align:right"><span class="seg"><span class="p">PASSED</span><span class="f on">NOT PASSED</span><span class="t">NOT TESTED</span><span class="n">N/A</span></span></td></tr>
+                  <tr class="grp"><td colspan="3">Remote Connection ad Adam's Hand da ML PRO a ML iOS/Android<small>6 test · 5 PASSED · 1 NOT PASSED</small></td></tr>
+                  <tr><td class="id">243<span class="new">nuovo</span></td><td><div class="tname">Gestione della connessione a seguito terminazione da parte dell'utente</div><div class="sub clip" style="max-width:520px">Nota: quando interrompo la connessione da utente, sull'iPad non lo vedo. Riesco a modificare tutte le impostazioni…</div></td><td style="text-align:right"><span class="seg"><span class="p">PASSED</span><span class="f on">NOT PASSED</span><span class="t">NOT TESTED</span><span class="n">N/A</span></span></td></tr>
+                </tbody>
+              </table>
+              <div class="kbar"><span><kbd>P</kbd>PASSED</span><span><kbd>F</kbd>NOT PASSED</span><span><kbd>N</kbd>NOT TESTED</span><span><kbd>A</kbd>NOT AVAILABLE</span><span><kbd>↑↓</kbd>test</span><span><kbd>Invio</kbd>apri</span><span class="save">Salvato</span></div>
+            </div>
+          </div>
+        </div></div></div>
+      </figure>
+
+      <!-- 6 RELEASE E REPORT -->
+      <figure class="shot">
+        <figcaption>
+          <h3>Mockup 6 · Release e report di esito</h3>
+          <p class="muted">Il report segue il layout del foglio Esito Test, ma versione, conteggi ed esito calcolato arrivano dalle sessioni. Motivazione, prossime azioni ed esito finale restano modificabili; se l'esito finale è diverso da quello calcolato serve una motivazione. "Invia agli approvatori" li avvisa con una notifica.</p>
+          <span class="path">/release/v2.1_rev00/report</span>
+        </figcaption>
+        <div class="frame"><div class="scroller"><div class="app" data-nav="rep">
+          <div class="main">
+            <div class="ph">
+              <div><div class="crumb">Release / v.2.1_rev00</div><h4>Report di esito · v.2.1_rev00</h4></div>
+              <div class="acts"><span class="btn">Esporta Excel</span><span class="btn">Esporta PDF</span><span class="btn">Salva</span><span class="btn pri">Invia agli approvatori</span></div>
+            </div>
+            <div class="two">
+              <div class="sheet">
+                <div class="rep-title"><h5>Risultati dei Test</h5><span class="tag todo">BOZZA</span></div>
+                <div class="kv">
+                  <span>Data test</span><span>20/09/2026</span><span>Effettuata da</span><span>Gianluca D'Amico</span>
+                  <span>Versione software</span><span><span class="mono">v.2.1</span> <span class="sub">dalla release</span></span><span>Unit Test verificati</span><span>4 sessioni · 264 test</span>
+                </div>
+                <div class="rep-sec"><h6>Motivazione degli Unit Test</h6><div class="ta">Test della versione v2.1 del software MyoLogic Pro</div></div>
+                <div class="rep-sec"><h6>Risultato degli Unit Test<small>calcolato dalle sessioni</small></h6>
+                  <table class="mt">
+                    <thead><tr><th>Sessione</th><th class="num">PASSED</th><th class="num">NOT PASSED</th><th class="num">N/A</th><th class="num">NOT TESTED</th></tr></thead>
+                    <tbody>
+                      <tr><td>AH03 + rotatore + PRISM + Pulse</td><td class="num">95</td><td class="num">3</td><td class="num">0</td><td class="num">166</td></tr>
+                      <tr><td>AH03 + coaxial plug 6 bande + 2</td><td class="num">66</td><td class="num">1</td><td class="num">0</td><td class="num">197</td></tr>
+                      <tr><td>Conn. Remota Pro → iOS</td><td class="num">88</td><td class="num">5</td><td class="num">2</td><td class="num">169</td></tr>
+                      <tr><td>Conn. Remota Pro → Android</td><td class="num">86</td><td class="num">3</td><td class="num">2</td><td class="num">173</td></tr>
+                    </tbody>
+                    <tfoot><tr><td>Totale</td><td class="num">335</td><td class="num" style="color:var(--fail)">12</td><td class="num">4</td><td class="num">705</td></tr></tfoot>
+                  </table>
+                </div>
+                <div class="rep-sec"><h6>Prossime azioni</h6><div class="ta">È possibile procedere al rilascio dell'app MyoLogic Pro v2.1</div></div>
+                <div class="rep-sec final">
+                  <div class="fld"><label>Esito calcolato</label><div><span class="tag fail">NOT PASSED</span></div><span class="sub">12 esiti NOT PASSED su 8 test</span></div>
+                  <div class="fld"><label>Risultato finale</label><div class="inp val">PASSED <span class="chev">▾</span></div></div>
+                  <div class="fld"><label>Motivazione</label><div class="warn">Il risultato finale è diverso da quello calcolato: scrivi perché, per esempio difetti grafici accettati e rimandati alla prossima release.</div></div>
+                </div>
+              </div>
+              <div class="side-col">
+                <h5>Storico revisioni</h5>
+                <ul class="plain rev">
+                  <li><code>v.2.1_rev00</code><span class="sub" style="grid-column:auto">20/09/2026 · G. D'Amico</span><p>Release: terza posizione del pollice configurabile (intermedia); nuove animazioni di presa Handshake, Point Grip e Pinch.</p></li>
+                  <li><code>v.2.0.1_rev00</code><span class="sub" style="grid-column:auto">11/09/2026 · G. D'Amico</span><p>Patch: ottimizzazioni e problemi grafici; salvataggio dati Datalog; pulsante Reset nel Gain EMG del PRISM.</p></li>
+                  <li><code>v.2.0.0_rev02</code><span class="sub" style="grid-column:auto">07/09/2026 · G. D'Amico</span><p>Release: Area di Rest e Direct Pose Transition con PRISM; connessione remota tra app MyoLogic Pro.</p></li>
+                  <li><span class="btn link">Altre 29 versioni, dal 15/06/2020</span><span></span></li>
+                </ul>
+                <h5>Autore e approvatori</h5>
+                <ul class="plain">
+                  <li><span><b>Angelo Carrabba</b> <span class="sub">AI Software Developer</span></span><span class="sub" style="grid-column:auto">Autore · 04/08/2026</span></li>
+                  <li><span><b>Matteo Aventaggiato</b> <span class="sub">CRO</span></span><span class="sub" style="grid-column:auto">Approvatore · 04/08/2026</span></li>
+                  <li><span><b>Gianluca D'Amico</b> <span class="sub">Head of Sw Dv. Dept.</span></span><span class="sub" style="grid-column:auto">Approvatore · 04/08/2026</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div></div></div>
+      </figure>
+
+      <!-- 7 NOTIFICHE -->
+      <figure class="shot">
+        <figcaption>
+          <h3>Mockup 7 · Notifiche</h3>
+          <p class="muted">La campanella nella barra superiore conta le notifiche non lette e apre l'elenco. Tre eventi creano una notifica: nuovo NOT PASSED, sessione chiusa, report inviato agli approvatori; chi la riceve è la decisione 8. Le notifiche nascono nel database da un trigger, quindi nessun evento si perde. Orari e ordine sono di esempio.</p>
+          <span class="path">/dashboard · elenco notifiche aperto</span>
+        </figcaption>
+        <div class="frame"><div class="scroller"><div class="app" data-nav="dash" data-bell="open" style="min-height:440px">
+          <div class="main">
+            <div class="ph">
+              <div><div class="crumb">Dashboard</div><h4>Release v.2.1_rev00</h4><div class="meta">Rilasciata il 20/09/2026 da G. D'Amico</div></div>
+            </div>
+            <div class="sheet status">
+              <div><span class="lbl">Esito calcolato</span><div><span class="tag na">NON PRONTA</span></div><span class="sub">12 NOT PASSED su 8 test</span></div>
+              <div><span class="lbl">Esiti della release</span>
+                <div class="meter"><i class="p" style="width:31.7%"></i><i class="f" style="width:1.14%"></i><i class="n" style="width:.38%"></i></div>
+                <div class="legend"><span><b class="lp">335</b> PASSED</span><span><b class="lf">12</b> NOT PASSED</span><span><b class="ln">4</b> NOT AVAILABLE</span><span><b>705</b> NOT TESTED</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="pop" role="presentation">
+            <div class="pop-head"><b>Notifiche</b><span class="btn link" style="font-size:12.5px">Segna tutte come lette</span></div>
+            <div class="tabs"><span class="on">Non lette<b>3</b></span><span>Tutte<b>4</b></span></div>
+            <ul class="ntf">
+              <li class="unread"><span class="tag fail">NOT PASSED</span><div><b>Test 243 · Gestione della connessione a seguito terminazione da parte dell'utente</b><span class="sub">Remota iOS · registrato da G. D'Amico · 2 min fa</span></div></li>
+              <li class="unread"><span class="tag na">DA APPROVARE</span><div><b>Report v.2.1_rev00 inviato agli approvatori</b><span class="sub">Esito calcolato NOT PASSED · 1 ora fa</span></div></li>
+              <li class="unread"><span class="tag info">SESSIONE CHIUSA</span><div><b>AH03 + coaxial plug 6 bande + 2</b><span class="sub">66 PASSED · 1 NOT PASSED · 197 NOT TESTED · ieri</span></div></li>
+              <li><span class="tag fail">NOT PASSED</span><div><b>Test 150 · Visualizza informazioni batteria</b><span class="sub">Remota Android · nota: Temperatura −116° · ieri</span></div></li>
+            </ul>
+            <div class="pop-foot"><span class="btn link" style="font-size:12.5px">Vedi tutte le notifiche</span></div>
+          </div>
+        </div></div></div>
+      </figure>
+
+    </div>
+  </section>
+
+  <section id="piano">
+    <div class="intro">
+      <h2>Sei fasi, ognuna con qualcosa da provare</h2>
+      <p class="muted">Si parte dai dati, perché tutto il resto si appoggia lì. Alla fine di ogni fase c'è una versione funzionante da provare prima di passare alla successiva.</p>
+    </div>
+    <ol class="phases">
+      <li><div class="ph"><span>Fase 1</span><h3>Fondamenta e import dei dati</h3></div>
+        <div><ul>
+          <li>Progetto Node.js e progetto Supabase. Tabelle Postgres con il modello descritto sopra, create da migrazioni SQL versionate.</li>
+          <li>Login con Supabase Auth.</li>
+          <li>Script di import in Node dal file Excel: riempie le celle unite di Unità e Caso d'uso, riporta gli esiti alle 4 forme standard, pulisce i nomi dei dispositivi, assegna gli ID mancanti, importa le 4 sessioni, le 32 revisioni, autore e approvatori.</li>
+          <li>Report di import con l'elenco di ogni correzione, da controllare insieme.</li>
+        </ul><p class="check"><b>Verifica:</b> i conteggi nel database coincidono con il file (264 test, 335 PASSED, 12 NOT PASSED, 4 NOT AVAILABLE).</p></div></li>
+      <li><div class="ph"><span>Fase 2</span><h3>Catalogo test</h3></div>
+        <div><ul>
+          <li>Mockup 2 e 3: albero Unità → Caso d'uso → Test, ricerca, filtro per dispositivo.</li>
+          <li>Crea, modifica, duplica, archivia ed elimina per unità, casi d'uso, test e dispositivi, con le regole di sicurezza sulle eliminazioni.</li>
+        </ul><p class="check"><b>Verifica:</b> modificare un test lo aggiorna in tutte le sessioni.</p></div></li>
+      <li><div class="ph"><span>Fase 3</span><h3>Release, configurazioni e sessioni</h3></div>
+        <div><ul>
+          <li>Gestione delle release (storico revisioni, autore, approvatori) e delle configurazioni.</li>
+          <li>Mockup 4 e 5: nuova sessione dai dispositivi in prova; esecuzione con esito, nota, tasti rapidi e salvataggio automatico.</li>
+        </ul><p class="check"><b>Verifica:</b> una sessione completa registrata solo da tastiera.</p></div></li>
+      <li><div class="ph"><span>Fase 4</span><h3>Dashboard, report e notifiche</h3></div>
+        <div><ul>
+          <li>Mockup 1 e 6: copertura per unità, NOT PASSED aperti raggruppati per test, report calcolato con testi modificabili e invio agli approvatori.</li>
+          <li>Mockup 7: notifiche nell'app per nuovo NOT PASSED, sessione chiusa e report da approvare, create da trigger nel database.</li>
+        </ul><p class="check"><b>Verifica:</b> il report della v.2.1 riporta gli stessi numeri del file; ciascuno dei 3 eventi crea la notifica per le persone giuste.</p></div></li>
+      <li><div class="ph"><span>Fase 5</span><h3>Export</h3></div>
+        <div><ul>
+          <li>Export Excel con la struttura del file attuale: Cover&amp;History, Unit Test, un foglio per sessione, Esito Test.</li>
+          <li>Report in PDF tramite la stampa del browser.</li>
+        </ul><p class="check"><b>Verifica:</b> esportare e reimportare il file restituisce gli stessi dati.</p></div></li>
+      <li><div class="ph"><span>Fase 6</span><h3>Collaudo e consegna</h3></div>
+        <div><ul>
+          <li>Test automatici su import, calcolo degli esiti ed export.</li>
+          <li>Prova completa insieme su una sessione reale.</li>
+          <li>Istruzioni per avvio, configurazione di Supabase e backup.</li>
+        </ul><p class="check"><b>Verifica:</b> un tester nuovo esegue una sessione senza aiuto.</p></div></li>
+    </ol>
+
+    <h3 style="margin-top:12px">Tecnologia</h3>
+    <dl class="dl">
+      <dt>Applicazione web</dt><dd>Si usa dal browser: nessuna installazione per chi esegue i test, tutti lavorano sugli stessi dati.</dd>
+      <dt>Node.js + Express</dt><dd>Pagine generate dal server (EJS) con htmx per le azioni rapide, come l'esito con un clic. Nessun framework frontend da mantenere (decisione 7).</dd>
+      <dt>Supabase</dt><dd>Database Postgres gestito, che il server Node interroga direttamente in SQL, e login degli utenti con Supabase Auth. Le tabelle nascono da migrazioni SQL salvate nel progetto.</dd>
+      <dt>exceljs</dt><dd>Lettura del file attuale ed export Excel con lo stesso layout, celle unite comprese.</dd>
+    </dl>
+    <p class="note">L'app si avvia con <span class="mono">npm start</span>. La stringa di connessione al database e la chiave pubblica di Supabase stanno in un file di configurazione sul server: il browser non parla mai direttamente con il database.</p>
+    <p class="note">Il piano gratuito di Supabase mette in pausa i progetti inattivi e non prevede backup automatici, quindi per l'uso reale conviene il piano Pro. Verifichiamo le condizioni al momento dell'attivazione.</p>
+  </section>
+
+  <section id="decisioni">
+    <div class="intro">
+      <h2>Da decidere prima di partire</h2>
+      <p class="muted">Queste scelte cambiano il lavoro delle prime fasi. Per ognuna c'è un'opzione consigliata; se va bene, basta confermare.</p>
+    </div>
+    <ol class="decisions">
+      <li><h3>Dove girano app e database?</h3>
+        <ul class="opts"><li class="rec">Supabase cloud (regione UE) + app Node su un servizio di hosting <em>consigliata</em></li><li>Supabase cloud (UE) + app Node su server aziendale</li><li>Tutto su server aziendale, con Supabase self-hosted</li></ul>
+        <p class="why">Con il database già in cloud, mettere in cloud anche l'app evita di gestire un server e permette di lavorare da qualsiasi sede. La regione UE tiene i dati in Europa.</p></li>
+      <li><h3>Come si accede?</h3>
+        <ul class="opts"><li class="rec">Email e password con Supabase Auth <em>consigliata</em></li><li>Account Google o Microsoft aziendale</li></ul>
+        <p class="why">Con il database raggiungibile in rete il login è obbligatorio, e dà a ogni esito un autore certo. Supabase Auth gestisce entrambe le opzioni.</p></li>
+      <li><h3>Teniamo lo storico delle modifiche?</h3>
+        <ul class="opts"><li class="rec">Sì: chi ha cambiato cosa e quando <em>consigliata</em></li><li>No</li></ul>
+        <p class="why">Per la documentazione di validazione del software è utile poter dimostrare chi ha modificato un test o un esito. In Postgres basta un trigger per tabella: costa poco se si decide adesso.</p></li>
+      <li><h3>Come trattiamo gli ID dei test?</h3>
+        <ul class="opts"><li class="rec">Tengo gli ID attuali e assegno 168–266 ai 95 test senza ID e ai 4 duplicati <em>consigliata</em></li><li>Rinumero tutto da 1 a 264</li></ul>
+        <p class="why">Tenere gli ID attuali evita di rompere i riferimenti già usati in documenti e conversazioni.</p></li>
+      <li><h3>Uniamo le unità con nomi quasi uguali?</h3>
+        <ul class="opts"><li class="rec">Sì, con la tua conferma nel report di import <em>consigliata</em></li><li>No, restano separate</li></ul>
+        <p class="why">Coppie trovate: "Gestione account (TO)" / "Gestione Account TO", "Gestione Dispostiivi" / "Gestione Dispositivi", "Gestione account Distributore" / "Gestione account (DIS)".</p></li>
+      <li><h3>Che formato deve avere l'export Excel?</h3>
+        <ul class="opts"><li class="rec">Stesso layout del file attuale <em>consigliata</em></li><li>Tabella semplice</li></ul>
+        <p class="why">Lo stesso layout mantiene la continuità con la documentazione già consegnata.</p></li>
+      <li><h3>Come costruiamo l'interfaccia?</h3>
+        <ul class="opts"><li class="rec">Pagine generate da Node (EJS + htmx) <em>consigliata</em></li><li>App React, per esempio con Next.js</li></ul>
+        <p class="why">Le schermate dei mockup sono tabelle e form: le pagine generate dal server bastano e richiedono meno codice da mantenere. React conviene se in futuro serviranno interfacce molto più interattive.</p></li>
+      <li><h3>Chi riceve le notifiche di NOT PASSED e sessione chiusa?</h3>
+        <ul class="opts"><li class="rec">Autore e approvatori della release <em>consigliata</em></li><li>Tutti gli utenti</li></ul>
+        <p class="why">"Report da approvare" va comunque solo agli approvatori. Autore e approvatori si scelgono tra gli utenti nella scheda della release.</p></li>
+    </ol>
+
+    <h3 style="margin-top:12px">Fuori dalla prima versione</h3>
+    <ul class="out muted">
+      <li>Colonne R–W (Esito Demo, Note Test RUSSO, Note Test ITA): oggi sono vuote. Le note in più lingue si aggiungono dopo, se servono.</li>
+      <li>Allegati e screenshot sugli esiti.</li>
+      <li>Firma elettronica del report: si registrano nome, ruolo e data dell'approvatore.</li>
+      <li>Collegamento a un sistema di bug tracking.</li>
+      <li>Notifiche via email, Teams o Slack: nella prima versione arrivano solo dentro l'app.</li>
+      <li>App mobile dedicata: l'applicazione web si usa anche da tablet.</li>
+    </ul>
+  </section>
+
+  <footer class="end">Analisi basata su <span class="mono">MyoLogic Pro – Unit Test v.2.1_rev00.xlsx</span> (7 fogli, 264 test). Nessun codice è stato ancora scritto: si parte dopo la tua revisione.</footer>
+</main>
+
+<script>
+// Barra superiore comune a tutte le schermate
+(function(){
+  var NAV=[['dash','Dashboard'],['cat','Catalogo'],['ses','Sessioni'],['rel','Release'],['rep','Report'],['set','Impostazioni']];
+  var wave='<svg viewBox="0 0 24 24" fill="none" stroke="#E9EFF4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 13h4l2-6 3 11 3-9 2 4h6"/></svg>';
+  var bell='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>';
+  document.querySelectorAll('.app[data-nav]').forEach(function(app){
+    var tb=document.createElement('div'); tb.className='tb';
+    tb.innerHTML='<div class="tb-brand"><span class="mark">'+wave+'</span>MyoLogic<span>Test Manager</span></div>'+
+      '<nav>'+NAV.map(function(n){return '<span class="'+(n[0]===app.dataset.nav?'on':'')+'">'+n[1]+'</span>';}).join('')+'</nav>'+
+      '<div class="tb-right"><span class="tb-rel">Release <b>v.2.1_rev00</b> ▾</span><span class="tb-search">Cerca test <kbd>⌘K</kbd></span>'+
+      '<span class="tb-bell'+(app.dataset.bell==='open'?' on':'')+'" aria-label="3 notifiche non lette">'+bell+'<b>3</b></span><span class="tb-user">GD</span></div>';
+    app.prepend(tb);
+  });
+})();
+</script>

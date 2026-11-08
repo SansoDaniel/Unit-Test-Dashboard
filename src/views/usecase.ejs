@@ -1,0 +1,24 @@
+<%- include('_top', { title: original ? original.name : "Nuovo caso d'uso", nav: 'cat' }) %>
+<div class="narrow">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb"><a href="/catalogo">Catalogo</a></div><h1><%= original ? "Modifica caso d'uso" : "Nuovo caso d'uso" %></h1></div>
+  </div>
+  <form class="sheet form" method="post" action="<%= original ? `/catalogo/casi/${original.id}` : '/catalogo/casi' %>">
+    <div class="fld"><label for="name">Nome</label><input id="name" name="name" required value="<%= useCase.name %>" autofocus></div>
+    <div class="fld">
+      <label for="unit_id">Unità del software</label>
+      <select id="unit_id" name="unit_id" required>
+        <option value="">Scegli…</option>
+        <% units.forEach((u) => { %><option value="<%= u.id %>" <%= useCase.unit_id === u.id ? 'selected' : '' %>><%= u.name %></option><% }) %>
+      </select>
+      <% if (original) { %><span class="sub">Cambiando unità, il caso d'uso si sposta con tutti i suoi test.</span><% } %>
+    </div>
+    <div class="form-foot">
+      <a class="btn" href="/catalogo<%= useCase.unit_id ? `?unit=${useCase.unit_id}` : '' %>">Annulla</a>
+      <button class="btn pri" type="submit"><%= original ? 'Salva' : "Crea caso d'uso" %></button>
+    </div>
+  </form>
+  <% if (original) { %><p><a class="dlink" href="/catalogo/casi/<%= original.id %>/elimina">Elimina caso d'uso…</a></p><% } %>
+</div>
+<%- include('_bottom') %>

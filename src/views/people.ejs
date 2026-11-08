@@ -1,0 +1,39 @@
+<%- include('_top', { title: 'Persone', nav: 'set' }) %>
+<div class="narrow wide">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb">Impostazioni</div><h1>Persone</h1><div class="meta">Tester, autori e approvatori. Collega ogni persona al suo account: gli esiti che registra porteranno il suo nome.</div></div>
+  </div>
+  <%- include('_settings-tabs', { tab: 'persone' }) %>
+  <div class="sheet">
+    <table class="mt">
+      <thead><tr><th scope="col" colspan="3">Nome, ruolo e account di accesso</th><th scope="col"><span class="sr">Azioni</span></th></tr></thead>
+      <tbody>
+        <% rows.forEach((p) => { const linked = new Set(rows.filter((x) => x.user_id && x.id !== p.id).map((x) => x.user_id)); %>
+          <tr>
+            <td colspan="3">
+              <form class="inline" id="p-<%= p.id %>" method="post" action="/impostazioni/persone/<%= p.id %>">
+                <label class="sr" for="pn-<%= p.id %>">Nome</label><input id="pn-<%= p.id %>" name="full_name" required value="<%= p.full_name %>">
+                <label class="sr" for="pt-<%= p.id %>">Ruolo</label><input id="pt-<%= p.id %>" name="title" value="<%= p.title ?? '' %>" placeholder="Ruolo">
+                <label class="sr" for="pu-<%= p.id %>">Account</label>
+                <select id="pu-<%= p.id %>" name="user_id"><option value="">Nessun account</option>
+                  <% accounts.filter((a) => !linked.has(a.id)).forEach((a) => { %><option value="<%= a.id %>" <%= p.user_id === a.id ? 'selected' : '' %>><%= a.email %><%= a.id === user.id ? ' (tu)' : '' %></option><% }) %>
+                </select>
+                <button class="link" type="submit">Salva</button>
+              </form>
+            </td>
+            <td class="num nowrap"><a class="dlink" href="/impostazioni/persone/<%= p.id %>/elimina">Elimina…</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% if (!rows.length) { %><p class="empty">Nessuna persona. Aggiungi chi esegue i test, gli autori e gli approvatori qui sotto, poi collega ognuno al suo account.</p><% } %>
+    <form class="inline add-row" method="post" action="/impostazioni/persone">
+      <label for="new-name">Nuova persona</label>
+      <input id="new-name" name="full_name" required value="<%= draft.full_name %>" placeholder="Nome e cognome">
+      <label class="sr" for="new-title">Ruolo</label><input id="new-title" name="title" value="<%= draft.title ?? '' %>" placeholder="Ruolo">
+      <button class="btn pri" type="submit">Aggiungi</button>
+    </form>
+  </div>
+</div>
+<%- include('_bottom') %>

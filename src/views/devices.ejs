@@ -1,0 +1,35 @@
+<%- include('_top', { title: 'Dispositivi', nav: 'set' }) %>
+<div class="narrow">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb">Impostazioni</div><h1>Dispositivi</h1><div class="meta">I dispositivi a cui si riferiscono i test del catalogo e le configurazioni.</div></div>
+  </div>
+  <%- include('_settings-tabs', { tab: 'dispositivi' }) %>
+  <div class="sheet">
+    <table class="mt">
+      <thead><tr><th scope="col">Nome</th><th scope="col" class="num">Test</th><th scope="col"><span class="sr">Azioni</span></th></tr></thead>
+      <tbody>
+        <% devices.forEach((d) => { %>
+          <tr>
+            <td>
+              <form class="inline" method="post" action="/impostazioni/dispositivi/<%= d.id %>">
+                <label class="sr" for="dev-<%= d.id %>">Nome di <%= d.name %></label>
+                <input id="dev-<%= d.id %>" name="name" required value="<%= d.name %>">
+                <button class="link" type="submit">Rinomina</button>
+              </form>
+            </td>
+            <td class="num"><%= d.tests %></td>
+            <td class="num"><a class="dlink" href="/impostazioni/dispositivi/<%= d.id %>/elimina">Elimina…</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% if (!devices.length) { %><p class="empty">Nessun dispositivo. Aggiungi il primo qui sotto: test e configurazioni lo potranno usare.</p><% } %>
+    <form class="inline add-row" method="post" action="/impostazioni/dispositivi">
+      <label for="new-device">Nuovo dispositivo</label>
+      <input id="new-device" name="name" required value="<%= draft %>" placeholder="es. AH04">
+      <button class="btn pri" type="submit">Aggiungi</button>
+    </form>
+  </div>
+</div>
+<%- include('_bottom') %>

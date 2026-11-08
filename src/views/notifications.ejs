@@ -1,0 +1,32 @@
+<%- include('_top', { title: 'Notifiche', nav: null }) %>
+<div class="narrow wide">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb">Notifiche</div><h1>Notifiche</h1>
+      <div class="meta">Nuovi NOT PASSED, sessioni chiuse e report da approvare delle release in cui sei autore o approvatore.</div></div>
+    <% if (bell.unread) { %><div class="acts"><form method="post" action="/notifiche/lette"><button class="btn" type="submit">Segna tutte come lette</button></form></div><% } %>
+  </div>
+  <nav class="tabs" aria-label="Filtra le notifiche">
+    <a href="/notifiche" <%- everything ? '' : 'class="on" aria-current="page"' %>>Non lette<b><%= bell.unread %></b></a>
+    <a href="/notifiche?tutte=1" <%- everything ? 'class="on" aria-current="page"' : '' %>>Tutte<b><%= total %></b></a>
+  </nav>
+  <div class="sheet">
+    <% if (items.length) { %>
+      <ul class="ntf">
+        <% items.forEach((n) => { %>
+          <li class="<%= n.read_at ? '' : 'unread' %>">
+            <span class="tag <%= n.tag %>"><%= n.label %></span>
+            <div><b><%= n.title %></b><span class="sub"><%= n.detail %> · <%= n.when %></span></div>
+            <div class="row nowrap">
+              <form method="post" action="/notifiche/<%= n.id %>/apri"><button class="btn sm" type="submit">Apri</button></form>
+              <% if (!n.read_at) { %><form method="post" action="/notifiche/<%= n.id %>/letta"><button class="link small" type="submit">Segna come letta</button></form><% } %>
+              <a class="dlink small" href="/notifiche/<%= n.id %>/elimina">Elimina…</a>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %><p class="empty"><%= everything ? 'Nessuna notifica.' : 'Nessuna notifica da leggere.' %></p><% } %>
+  </div>
+  <p class="sub">Le notifiche arrivano alle persone collegate al proprio account in <a href="/impostazioni/persone">Impostazioni → Persone</a>.</p>
+</div>
+<%- include('_bottom') %>

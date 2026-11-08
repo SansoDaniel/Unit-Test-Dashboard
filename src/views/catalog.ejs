@@ -1,0 +1,84 @@
+<%- include('_top', { title: unit ? unit.name : 'Catalogo', nav: 'cat', layout: 'split' }) %>
+  <nav class="tree" aria-label="Unità del software">
+    <ul>
+      <li><a class="btn pri" href="/catalogo/unita/nuova" style="margin-bottom: 4px">+ Nuova unità</a></li>
+      <li><a href="/catalogo" class="<%= unit ? '' : 'on' %>"><span>Tutte le unità</span><b><%= total %></b></a></li>
+      <% units.forEach((u) => { const open = unit && unit.id === u.id; %>
+        <li>
+          <a href="/catalogo?unit=<%= u.id %>" class="<%= open ? 'on' : '' %>" <%- open ? 'aria-current="page"' : '' %>><span><span class="caret<%= open ? ' open' : '' %>" aria-hidden="true"></span><%= u.name %></span><b><%= u.tests %></b></a>
+          <% if (open && useCases.length) { %>
+            <ul><% useCases.forEach((c) => { %><li><a class="uc" href="#uc-<%= c.id %>"><span><%= c.name %></span><b><%= c.tests %></b></a></li><% }) %></ul>
+          <% } %>
+        </li>
+      <% }) %>
+    </ul>
+  </nav>
+
+  <div class="page">
+    <%- include('_messages') %>
+    <div class="ph">
+      <div>
+        <div class="crumb">Catalogo</div>
+        <h1><%= unit ? unit.name : 'Tutte le unità' %></h1>
+        <div class="meta"><%= tests.length %> test<%= filtered ? ' trovati' : '' %><%= unit ? ` · ${useCases.length} casi d'uso` : '' %><%= release ? ` · esiti della release ${release.version}` : '' %></div>
+      </div>
+      <div class="acts">
+        <% if (unit) { %>
+          <a class="btn" href="/catalogo/unita/<%= unit.id %>">Modifica unità</a>
+          <a class="btn" href="/catalogo/casi/nuovo?unit=<%= unit.id %>">Nuovo caso d'uso</a>
+        <% } %>
+        <a class="btn pri" href="/catalogo/test/nuovo<%= unit ? `?unit=${unit.id}` : '' %>">Nuovo test</a>
+      </div>
+    </div>
+
+    <form class="filters" method="get" action="/catalogo" role="search">
+      <% if (unit) { %><input type="hidden" name="unit" value="<%= unit.id %>"><% } %>
+      <label class="sr" for="q">Cerca</label>
+      <input id="q" name="q" type="search" value="<%= filters.q %>" placeholder="Cerca per ID, nome, descrizione o operazioni">
+      <label class="sr" for="device">Dispositivo</label>
+      <select id="device" name="device">
+        <option value="">Dispositivo: tutti</option>
+        <% devices.forEach((d) => { %><option value="<%= d.id %>" <%= filters.device === d.id ? 'selected' : '' %>><%= d.name %></option><% }) %>
+      </select>
+      <label class="cb"><input type="checkbox" name="np" value="1" <%= filters.np ? 'checked' : '' %>> Solo con NOT PASSED</label>
+      <label class="cb"><input type="checkbox" name="archived" value="1" <%= filters.archived ? 'checked' : '' %>> Mostra archiviati</label>
+      <button class="btn" type="submit">Filtra</button>
+      <% if (filtered || filters.archived) { %><a class="link" href="/catalogo<%= unit ? `?unit=${unit.id}` : '' %>">Azzera filtri</a><% } %>
+    </form>
+
+    <div class="sheet">
+      <table class="mt">
+        <thead>
+          <tr>
+            <th scope="col" style="width:84px">ID</th><th scope="col">Nome test</th><th scope="col">Dispositivi</th>
+            <th scope="col" style="width:110px">Esiti</th>
+            <th scope="col" style="width:150px"><span class="sr">Azioni</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (unit) { %>
+            <% useCases.forEach((c) => { const rows = tests.filter((t) => t.use_case_id === c.id); if (filtered && !rows.length) return; %>
+              <tr class="grp" id="uc-<%= c.id %>"><th colspan="5" scope="rowgroup"><%= c.name %><small><%= rows.length %> test</small><a class="link" href="/catalogo/casi/<%= c.id %>">Modifica</a></th></tr>
+              <% rows.forEach((t) => { %><%- include('_test-row', { t, sessions, outcomes }) %><% }) %>
+              <% if (!rows.length) { %><tr><td colspan="5" class="empty-row">Nessun test. <a class="link" href="/catalogo/test/nuovo?unit=<%= unit.id %>">Aggiungine uno</a></td></tr><% } %>
+            <% }) %>
+          <% } else { let lastUnit = null, lastUseCase = null; %>
+            <% tests.forEach((t) => { %>
+              <% if (t.unit_id !== lastUnit) { lastUnit = t.unit_id; %><tr class="unit-row"><th colspan="5" scope="rowgroup"><a href="/catalogo?unit=<%= t.unit_id %>"><%= t.unit %></a></th></tr><% } %>
+              <% if (t.use_case_id !== lastUseCase) { lastUseCase = t.use_case_id; %><tr class="grp"><th colspan="5" scope="rowgroup"><%= t.use_case %><a class="link" href="/catalogo/casi/<%= t.use_case_id %>">Modifica</a></th></tr><% } %>
+              <%- include('_test-row', { t, sessions, outcomes }) %>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+      <% if (!tests.length && (filtered || !unit || !useCases.length)) { %>
+        <p class="empty"><%= filtered ? 'Nessun test corrisponde ai filtri.' : unit ? "Questa unità non ha ancora casi d'uso. Crea il primo con \"Nuovo caso d'uso\"." : 'Il catalogo è vuoto.' %></p>
+      <% } %>
+    </div>
+
+    <% if (sessions.length) { %>
+      <div class="legend" aria-hidden="true"><span><span class="sq"><i class="p"></i></span>PASSED</span><span><span class="sq"><i class="f"></i></span>NOT PASSED</span><span><span class="sq"><i class="n"></i></span>NOT AVAILABLE</span><span><span class="sq"><i></i></span>NOT TESTED</span></div>
+      <p class="sub">Esiti della release <%= release.version %>, un quadratino per sessione da sinistra: <%= sessions.map((s, i) => `${i + 1}. ${s.name}`).join(' · ') %></p>
+    <% } %>
+  </div>
+<%- include('_bottom') %>

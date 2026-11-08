@@ -1,0 +1,32 @@
+<%- include('_top', { title: 'Sessioni', nav: 'ses' }) %>
+  <%- include('_messages') %>
+  <div class="ph">
+    <div>
+      <div class="crumb">Sessioni</div>
+      <h1>Sessioni di test<%= release ? ` · ${release.version}` : '' %></h1>
+      <div class="meta">Per le sessioni di un'altra release, scegli la release in <a href="/release">Release</a>.</div>
+    </div>
+    <div class="acts"><a class="btn pri" href="/sessioni/nuova">Nuova sessione</a></div>
+  </div>
+  <div class="sheet">
+    <table class="mt">
+      <thead><tr><th scope="col">Configurazione</th><th scope="col">Dispositivi</th><th scope="col">Tester</th><th scope="col" class="num">Test</th><th scope="col" style="width:260px">Avanzamento</th><th scope="col">Stato</th></tr></thead>
+      <tbody>
+        <% rows.forEach((s) => { const pct = (n) => s.total ? (100 * n / s.total).toFixed(2) : 0; %>
+          <tr>
+            <td><a class="tname" href="/sessioni/<%= s.id %>"><%= s.configuration %></a><div class="sub">avviata il <%= fmtDay(s.started_on) %></div></td>
+            <td><% s.devices.forEach((d) => { %><span class="dev"><%= d %></span> <% }) %></td>
+            <td class="nowrap"><%= s.tester ?? '—' %></td>
+            <td class="num"><%= s.total %></td>
+            <td>
+              <div class="meter" aria-hidden="true"><i class="p" style="width:<%= pct(s.passed) %>%"></i><i class="f" style="width:<%= pct(s.failed) %>%"></i><i class="n" style="width:<%= pct(s.na) %>%"></i></div>
+              <div class="legend"><span><b class="lp"><%= s.passed %></b> PASSED</span><span><b class="lf"><%= s.failed %></b> NOT PASSED</span><% if (s.na) { %><span><b class="ln"><%= s.na %></b> N/A</span><% } %></div>
+            </td>
+            <td><span class="tag <%= s.status === 'closed' ? 'info' : 'todo' %>"><%= s.status === 'closed' ? 'CHIUSA' : 'IN CORSO' %></span></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% if (!rows.length) { %><p class="empty">Nessuna sessione per questa release. Creane una con "Nuova sessione".</p><% } %>
+  </div>
+<%- include('_bottom') %>

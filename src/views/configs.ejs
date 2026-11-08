@@ -1,0 +1,25 @@
+<%- include('_top', { title: 'Configurazioni', nav: 'set' }) %>
+<div class="narrow wide">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb">Impostazioni</div><h1>Configurazioni</h1><div class="meta">Le configurazioni hardware su cui si provano le release. I loro dispositivi decidono quali test entrano in una nuova sessione.</div></div>
+    <div class="acts"><a class="btn pri" href="/impostazioni/configurazioni/nuova">Nuova configurazione</a></div>
+  </div>
+  <%- include('_settings-tabs', { tab: 'configurazioni' }) %>
+  <div class="sheet">
+    <table class="mt">
+      <thead><tr><th scope="col">Nome</th><th scope="col">Dispositivi</th><th scope="col" class="num">Sessioni</th></tr></thead>
+      <tbody>
+        <% rows.forEach((c) => { %>
+          <tr>
+            <td><a class="tname" href="/impostazioni/configurazioni/<%= c.id %>"><%= c.name %></a><% if (c.description) { %><div class="sub"><%= c.description %></div><% } %></td>
+            <td><% if (c.devices.length) { c.devices.forEach((d) => { %><span class="dev"><%= d %></span> <% }) } else { %><span class="sub">Nessuno: una nuova sessione include tutti i test</span><% } %></td>
+            <td class="num"><%= c.sessions %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% if (!rows.length) { %><p class="empty">Nessuna configurazione. Creane una per poter avviare una sessione di test.</p><% } %>
+  </div>
+</div>
+<%- include('_bottom') %>

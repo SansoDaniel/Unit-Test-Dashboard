@@ -1,0 +1,28 @@
+<%- include('_top', { title: 'Release', nav: 'rel' }) %>
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb">Release</div><h1>Storico revisioni</h1><div class="meta">La release in uso decide quali esiti mostrano catalogo e sessioni.</div></div>
+    <div class="acts"><a class="btn pri" href="/release/nuova">Nuova release</a></div>
+  </div>
+  <div class="sheet">
+    <table class="mt">
+      <thead><tr><th scope="col">Versione</th><th scope="col">Data</th><th scope="col">Autore</th><th scope="col">Modifiche</th><th scope="col" class="num">Sessioni</th><th scope="col"><span class="sr">Azioni</span></th></tr></thead>
+      <tbody>
+        <% rows.forEach((v) => { const current = release && release.id === v.id; %>
+          <tr>
+            <td><a class="tname mono" href="/release/<%= v.id %>"><%= v.version %></a></td>
+            <td class="nowrap"><%= fmtDay(v.released_on) %></td>
+            <td class="nowrap"><%= v.author ?? '—' %></td>
+            <td class="changes"><%= (v.changes ?? '').split('\n').filter(Boolean).join(' · ') %></td>
+            <td class="num"><%= v.sessions %></td>
+            <td class="num nowrap">
+              <% if (current) { %><span class="tag info">IN USO</span>
+              <% } else { %><form method="post" action="/release/<%= v.id %>/usa"><button class="link" type="submit">Usa questa</button></form><% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% if (!rows.length) { %><p class="empty">Nessuna release. Crea la prima con "Nuova release" o importa il file Excel.</p><% } %>
+  </div>
+<%- include('_bottom') %>

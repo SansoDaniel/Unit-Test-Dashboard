@@ -1,0 +1,80 @@
+<% const isNew = !original; const cls = { 'PASSED': 'pass', 'NOT PASSED': 'fail', 'NOT AVAILABLE': 'na', 'NOT TESTED': 'todo' }; %>
+<%- include('_top', { title: isNew ? 'Nuovo test' : `Test ${original.code}`, nav: 'cat' }) %>
+<% if (!isNew) { %>
+  <form id="duplica" method="post" action="/catalogo/test/<%= original.code %>/duplica"></form>
+  <% if (original.archived) { %><form id="ripristina" method="post" action="/catalogo/test/<%= original.code %>/ripristina"></form><% } %>
+<% } %>
+<form class="stack" method="post" action="<%= isNew ? '/catalogo/test' : `/catalogo/test/${original.code}` %>">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div>
+      <div class="crumb"><a href="/catalogo">Catalogo</a><% if (!isNew) { %> / <a href="/catalogo?unit=<%= original.unit_id %>"><%= original.unit %></a><% } %></div>
+      <h1><% if (!isNew) { %><span class="id big"><%= original.code %></span><% } %><%= isNew ? 'Nuovo test' : original.name %><% if (!isNew && original.archived) { %> <span class="tag todo">ARCHIVIATO</span><% } %></h1>
+    </div>
+    <div class="acts">
+      <a class="btn" href="<%= isNew ? '/catalogo' : `/catalogo?unit=${original.unit_id}` %>">Annulla</a>
+      <% if (!isNew) { %><button class="btn" type="submit" form="duplica">Duplica</button><% } %>
+      <button class="btn pri" type="submit"><%= isNew ? 'Crea test' : 'Salva modifiche' %></button>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="sheet form">
+      <div class="row3">
+        <div class="fld">
+          <label for="code">ID test</label>
+          <input id="code" name="code" inputmode="numeric" required value="<%= test.code %>" class="mono">
+        </div>
+        <div class="fld wide">
+          <label for="use_case_id">Unità e caso d'uso</label>
+          <select id="use_case_id" name="use_case_id" required>
+            <option value="">Scegli…</option>
+            <% units.forEach((u) => { %><optgroup label="<%= u.name %>"><% u.items.forEach((c) => { %><option value="<%= c.id %>" <%= test.use_case_id === c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></optgroup><% }) %>
+          </select>
+          <a class="link small" href="/catalogo/casi/nuovo">Crea un nuovo caso d'uso</a>
+        </div>
+      </div>
+      <div class="fld"><label for="name">Nome test</label><input id="name" name="name" required value="<%= test.name %>"></div>
+      <fieldset class="fld">
+        <legend>Dispositivi</legend>
+        <div class="checks">
+          <% devices.forEach((d) => { %><label class="cb"><input type="checkbox" name="devices" value="<%= d.id %>" <%= test.devices.includes(d.id) ? 'checked' : '' %>> <%= d.name %></label><% }) %>
+        </div>
+      </fieldset>
+      <div class="fld"><label for="description">Descrizione test</label><textarea id="description" name="description" rows="4"><%= test.description ?? '' %></textarea></div>
+      <div class="fld"><label for="operations">Descrizione operazioni</label><textarea id="operations" name="operations" rows="7"><%= test.operations ?? '' %></textarea></div>
+      <% if (!isNew) { %>
+        <div class="form-foot">
+          <span class="sub">Le modifiche valgono per tutte le sessioni che includono il test.</span>
+          <% if (original.archived) { %><button class="link" type="submit" form="ripristina">Ripristina test</button>
+          <% } else { %><a class="dlink" href="/catalogo/test/<%= original.code %>/elimina">Elimina test…</a><% } %>
+        </div>
+      <% } %>
+    </div>
+
+    <% if (!isNew) { %>
+      <aside class="side-col" aria-label="Esiti e storico">
+        <section class="sheet">
+          <h2 class="sh-head"><%= release ? `Esiti in ${release.version}` : 'Esiti' %></h2>
+          <% if (!results.length) { %><p class="empty">Il test non è in nessuna sessione di questa release.</p><% } else { %>
+            <ul class="plain">
+              <% results.forEach((x) => { %>
+                <li><span><%= x.configuration %></span><span class="tag <%= cls[x.outcome] %>"><%= x.outcome %></span>
+                  <% if (x.graphic_issue || x.note) { %><p><% if (x.graphic_issue) { %><b>Problema grafico.</b> <% } %><%= x.note ?? '' %></p><% } %></li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </section>
+        <section class="sheet">
+          <h2 class="sh-head">Storico modifiche</h2>
+          <% if (!events.length) { %><p class="empty">Nessuna modifica registrata.</p><% } else { %>
+            <ul class="plain">
+              <% events.forEach((e) => { %><li><span><%= e.label %></span><span class="sub"><%= e.at %></span><% if (e.by) { %><span class="sub"><%= e.by %></span><% } %></li><% }) %>
+            </ul>
+          <% } %>
+        </section>
+      </aside>
+    <% } %>
+  </div>
+</form>
+<%- include('_bottom') %>

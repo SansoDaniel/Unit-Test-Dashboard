@@ -1,0 +1,67 @@
+<%- include('_top', { title: original ? original.version : 'Nuova release', nav: 'rel' }) %>
+<div class="narrow wide">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb"><a href="/release">Release</a></div><h1><%= original ? `Release ${original.version}` : 'Nuova release' %></h1></div>
+    <% if (original) { %>
+      <div class="acts">
+        <% if (!release || release.id !== original.id) { %><form method="post" action="/release/<%= original.id %>/usa"><button class="btn" type="submit">Usa questa release</button></form><% } else { %><span class="tag info">IN USO</span><% } %>
+        <a class="btn" href="/release/<%= original.id %>/report">Report di esito</a>
+        <a class="btn" href="/release/<%= original.id %>/export.xlsx">Esporta Excel</a>
+      </div>
+    <% } %>
+  </div>
+
+  <form class="sheet form" method="post" action="<%= original ? `/release/${original.id}` : '/release' %>">
+    <div class="row3 even">
+      <div class="fld"><label for="version">Versione</label><input id="version" name="version" required value="<%= release.version %>" class="mono" placeholder="v.2.2_rev00"></div>
+      <div class="fld"><label for="released_on">Data</label><input id="released_on" name="released_on" type="date" value="<%= release.released_on ?? '' %>"></div>
+      <div class="fld"><label for="author_id">Autore</label>
+        <select id="author_id" name="author_id"><option value="">Non indicato</option>
+          <% persons.forEach((p) => { %><option value="<%= p.id %>" <%= release.author_id === p.id ? 'selected' : '' %>><%= p.full_name %></option><% }) %>
+        </select></div>
+    </div>
+    <div class="fld"><label for="changes">Descrizione delle modifiche</label><textarea id="changes" name="changes" rows="5"><%= release.changes ?? '' %></textarea></div>
+    <div class="form-foot">
+      <a class="btn" href="/release">Annulla</a>
+      <button class="btn pri" type="submit"><%= original ? 'Salva' : 'Crea release' %></button>
+    </div>
+  </form>
+
+  <% if (original) { %>
+    <section class="sheet" id="firme">
+      <h2 class="sh-head">Autore e approvatori del documento</h2>
+      <% if (signatures.length) { %>
+        <table class="mt">
+          <thead><tr><th scope="col">Persona</th><th scope="col">Ruolo</th><th scope="col">Data firma</th><th scope="col"><span class="sr">Azioni</span></th></tr></thead>
+          <tbody>
+            <% signatures.forEach((s) => { %>
+              <tr><td><b><%= s.full_name %></b><% if (s.title) { %> <span class="sub"><%= s.title %></span><% } %></td><td><%= roles[s.role] %></td><td><%= fmtDay(s.signed_on) %></td>
+                <td class="num"><a class="dlink" href="/release/<%= original.id %>/firme/elimina?person=<%= s.person_id %>&role=<%= s.role %>">Togli…</a></td></tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %><p class="empty">Nessuna firma.</p><% } %>
+      <form class="inline add-row" method="post" action="/release/<%= original.id %>/firme">
+        <label class="sr" for="sig-person">Persona</label>
+        <select id="sig-person" name="person_id" required><option value="">Persona…</option><% persons.forEach((p) => { %><option value="<%= p.id %>"><%= p.full_name %></option><% }) %></select>
+        <label class="sr" for="sig-role">Ruolo</label>
+        <select id="sig-role" name="role" required><% Object.entries(roles).forEach(([k, label]) => { %><option value="<%= k %>" <%= k === 'approver' ? 'selected' : '' %>><%= label %></option><% }) %></select>
+        <label class="sr" for="sig-date">Data firma</label>
+        <input id="sig-date" name="signed_on" type="date">
+        <button class="btn" type="submit">Aggiungi firma</button>
+      </form>
+    </section>
+
+    <section class="sheet">
+      <div class="sh-head between"><h2>Sessioni di test</h2><a class="btn sm" href="/sessioni/nuova?release=<%= original.id %>">Nuova sessione</a></div>
+      <% if (sessions.length) { %>
+        <table class="mt">
+          <tbody><% sessions.forEach((s) => { %><tr><td><a class="tname" href="/sessioni/<%= s.id %>"><%= s.configuration %></a></td><td class="num"><%= s.tests %> test</td><td class="num"><span class="tag <%= s.status === 'closed' ? 'info' : 'todo' %>"><%= s.status === 'closed' ? 'CHIUSA' : 'IN CORSO' %></span></td></tr><% }) %></tbody>
+        </table>
+      <% } else { %><p class="empty">Nessuna sessione per questa release.</p><% } %>
+    </section>
+    <p><a class="dlink" href="/release/<%= original.id %>/elimina">Elimina release…</a></p>
+  <% } %>
+</div>
+<%- include('_bottom') %>

@@ -1,0 +1,24 @@
+<%- include('_top', { title: original ? original.name : 'Nuova configurazione', nav: 'set' }) %>
+<div class="narrow">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb"><a href="/impostazioni/configurazioni">Configurazioni</a></div><h1><%= original ? 'Modifica configurazione' : 'Nuova configurazione' %></h1></div>
+  </div>
+  <form class="sheet form" method="post" action="<%= original ? `/impostazioni/configurazioni/${original.id}` : '/impostazioni/configurazioni' %>">
+    <div class="fld"><label for="name">Nome</label><input id="name" name="name" required value="<%= config.name %>" placeholder="AH03 + rotatore + PRISM + Pulse"></div>
+    <div class="fld"><label for="description">Descrizione</label><textarea id="description" name="description" rows="3"><%= config.description ?? '' %></textarea></div>
+    <fieldset class="fld">
+      <legend>Dispositivi in prova</legend>
+      <div class="checks">
+        <% devices.forEach((d) => { %><label class="cb"><input type="checkbox" name="devices" value="<%= d.id %>" <%= config.devices.includes(d.id) ? 'checked' : '' %>> <%= d.name %></label><% }) %>
+      </div>
+      <span class="sub">Una nuova sessione include i test di questi dispositivi e quelli senza dispositivo indicato; senza dispositivi, tutti i test. Le sessioni già create non cambiano.</span>
+    </fieldset>
+    <div class="form-foot">
+      <a class="btn" href="/impostazioni/configurazioni">Annulla</a>
+      <button class="btn pri" type="submit"><%= original ? 'Salva' : 'Crea configurazione' %></button>
+    </div>
+  </form>
+  <% if (original) { %><p><a class="dlink" href="/impostazioni/configurazioni/<%= original.id %>/elimina">Elimina configurazione…</a></p><% } %>
+</div>
+<%- include('_bottom') %>

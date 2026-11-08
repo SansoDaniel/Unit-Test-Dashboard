@@ -1,0 +1,37 @@
+<%- include('_top', { title: 'Nuova sessione', nav: 'ses' }) %>
+<div class="narrow">
+  <%- include('_messages') %>
+  <div class="ph"><div><div class="crumb"><a href="/sessioni">Sessioni</a></div><h1>Nuova sessione di test</h1></div></div>
+  <% if (!configs.length || !releases.length) { %>
+    <div class="sheet form">
+      <p>Per avviare una sessione servono almeno una release e una configurazione.</p>
+      <div class="row"><a class="btn" href="/release/nuova">Nuova release</a><a class="btn" href="/impostazioni/configurazioni/nuova">Nuova configurazione</a></div>
+    </div>
+  <% } else { %>
+    <form class="sheet form" method="post" action="/sessioni">
+      <div class="fld"><label for="release_id">Release</label>
+        <select id="release_id" name="release_id" required>
+          <% releases.forEach((r) => { %><option value="<%= r.id %>" <%= draft.release_id === r.id ? 'selected' : '' %>><%= r.version %></option><% }) %>
+        </select></div>
+      <div class="fld"><label for="configuration_id">Configurazione</label>
+        <select id="configuration_id" name="configuration_id" required aria-describedby="config-hint">
+          <option value="">Scegli…</option>
+          <% configs.forEach((c) => { %><option value="<%= c.id %>" <%= draft.configuration_id === c.id ? 'selected' : '' %>><%= c.name %> · <%= c.tests %> test<%= c.devices.length ? ` · ${c.devices.join(', ')}` : ' · tutti i dispositivi' %></option><% }) %>
+        </select>
+        <span class="sub" id="config-hint">Entrano i test dei dispositivi della configurazione e quelli senza dispositivo indicato; una configurazione senza dispositivi prende tutti i test. Dopo la creazione puoi aggiungere o togliere singoli test. I dispositivi si cambiano in <a href="/impostazioni/configurazioni">Configurazioni</a>.</span>
+      </div>
+      <div class="row3 even2">
+        <div class="fld"><label for="tester_id">Tester</label>
+          <select id="tester_id" name="tester_id"><option value="">Non indicato</option>
+            <% people.forEach((p) => { %><option value="<%= p.id %>" <%= draft.tester_id === p.id ? 'selected' : '' %>><%= p.full_name %></option><% }) %>
+          </select></div>
+        <div class="fld"><label for="started_on">Data di inizio</label><input id="started_on" name="started_on" type="date" value="<%= draft.started_on %>"></div>
+      </div>
+      <div class="form-foot">
+        <a class="btn" href="/sessioni">Annulla</a>
+        <button class="btn pri" type="submit">Crea sessione</button>
+      </div>
+    </form>
+  <% } %>
+</div>
+<%- include('_bottom') %>

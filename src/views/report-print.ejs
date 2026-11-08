@@ -1,0 +1,53 @@
+<% const t = summary.totals; %>
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report di esito <%= rel.version %> · MyoLogic Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@500&family=Atkinson+Hyperlegible+Next:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body class="print-page">
+  <div class="print-bar">
+    <a class="btn" href="/release/<%= rel.id %>/report">Torna al report</a>
+    <button class="btn pri" type="button" onclick="window.print()">Stampa o salva come PDF</button>
+  </div>
+  <article class="sheet-a4">
+    <header class="doc-head">
+      <div><p class="doc-kicker">FT01 - Adam's Hand · Software validation · Unit Test</p><h1>Risultati dei Test · MyoLogic Pro <%= rel.version %></h1></div>
+      <span class="tag <%= statusInfo.tag %>"><%= statusInfo.label %></span>
+    </header>
+    <table class="doc-kv">
+      <tr><th>Data test</th><td><%= fmtDay(report.test_date) %></td><th>Effettuata da</th><td><%= report.executed_by ?? '—' %></td></tr>
+      <tr><th>Versione software</th><td class="mono"><%= rel.version %></td><th>Unit Test verificati</th><td><%= summary.sessions.length %> sessioni · <%= summary.tests %> test</td></tr>
+    </table>
+    <h2>Motivazione degli Unit Test</h2>
+    <p class="doc-text"><%= report.motivation ?? '—' %></p>
+    <h2>Risultato degli Unit Test</h2>
+    <table class="doc-table">
+      <thead><tr><th>Sessione</th><th class="num">PASSED</th><th class="num">NOT PASSED</th><th class="num">N/A</th><th class="num">NOT TESTED</th></tr></thead>
+      <tbody><% summary.sessions.forEach((s) => { %><tr><td><%= s.configuration %></td><td class="num"><%= s.PASSED %></td><td class="num"><%= s['NOT PASSED'] %></td><td class="num"><%= s['NOT AVAILABLE'] %></td><td class="num"><%= s['NOT TESTED'] %></td></tr><% }) %></tbody>
+      <tfoot><tr><td>Totale</td><td class="num"><%= t.PASSED %></td><td class="num"><%= t['NOT PASSED'] %></td><td class="num"><%= t['NOT AVAILABLE'] %></td><td class="num"><%= t['NOT TESTED'] %></td></tr></tfoot>
+    </table>
+    <p class="doc-text">Esito calcolato dalle sessioni: <b><%= computed.label %></b><%= summary.failedTests ? ` (${t['NOT PASSED']} esiti NOT PASSED su ${summary.failedTests} test)` : '' %>.</p>
+    <h2>Prossime azioni</h2>
+    <p class="doc-text"><%= report.next_actions ?? '—' %></p>
+    <table class="doc-kv final">
+      <tr><th>Risultato finale</th><td><b><%= report.final_outcome ?? 'Da decidere' %></b></td></tr>
+      <tr><th>Motivazione</th><td><%= report.final_reason ?? '—' %></td></tr>
+    </table>
+    <h2>Autore e approvatori</h2>
+    <table class="doc-table signs">
+      <thead><tr><th>Nome</th><th>Ruolo</th><th>Funzione</th><th>Data</th><th>Firma</th></tr></thead>
+      <tbody>
+        <% signatures.forEach((s) => { %><tr><td><%= s.full_name %></td><td><%= s.role === 'approver' ? 'Approvatore' : 'Autore' %></td><td><%= s.title ?? '' %></td><td><%= fmtDay(s.signed_on) %></td><td class="sign-cell"></td></tr><% }) %>
+        <% if (!signatures.length) { %><tr><td colspan="5">Nessuna firma registrata.</td></tr><% } %>
+      </tbody>
+    </table>
+    <footer class="doc-foot">Generato da MyoLogic Test Manager il <%= printedAt %>.</footer>
+  </article>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · MyoLogic Test Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;600&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#contenuto">Vai al contenuto</a>
+  <header class="tb">
+    <a class="tb-brand" href="/"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 13h4l2-6 3 11 3-9 2 4h6"/></svg></span>MyoLogic<span>Test Manager</span></a>
+    <nav aria-label="Sezioni">
+      <% [['dash', '/', 'Dashboard'], ['cat', '/catalogo', 'Catalogo'], ['ses', '/sessioni', 'Sessioni'], ['rel', '/release', 'Release'], ['set', '/impostazioni/dispositivi', 'Impostazioni']].forEach(([key, href, label]) => { %>
+        <a href="<%= href %>" <%- locals.nav === key ? 'class="on" aria-current="page"' : '' %>><%= label %></a>
+      <% }) %>
+    </nav>
+    <div class="tb-right">
+      <% if (locals.release) { %><a class="tb-rel" href="/release" title="Cambia release">Release <b><%= release.version %></b></a><% } %>
+      <% if (locals.bell) { %>
+        <details class="tb-notif">
+          <summary class="tb-bell" aria-label="Notifiche: <%= bell.unread %> da leggere"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><% if (bell.unread) { %><b><%= bell.unread > 99 ? '99+' : bell.unread %></b><% } %></summary>
+          <div class="pop">
+            <div class="pop-head"><b>Notifiche</b><% if (bell.unread) { %><form method="post" action="/notifiche/lette"><button class="link small" type="submit">Segna tutte come lette</button></form><% } %></div>
+            <% if (bell.items.length) { %>
+              <ul class="ntf">
+                <% bell.items.forEach((n) => { %>
+                  <li class="unread"><span class="tag <%= n.tag %>"><%= n.label %></span>
+                    <div><form method="post" action="/notifiche/<%= n.id %>/apri"><button class="ntf-open" type="submit"><%= n.title %></button></form><span class="sub"><%= n.detail %> · <%= n.when %></span></div></li>
+                <% }) %>
+              </ul>
+            <% } else { %><p class="empty">Nessuna notifica da leggere.</p><% } %>
+            <div class="pop-foot"><a class="link small" href="/notifiche">Vedi tutte le notifiche</a></div>
+          </div>
+        </details>
+      <% } %>
+      <span class="tb-user"><%= user.email %></span>
+      <form method="post" action="/logout"><button class="tb-btn" type="submit">Esci</button></form>
+    </div>
+  </header>
+  <main id="contenuto" class="<%= locals.layout ?? 'page' %>">

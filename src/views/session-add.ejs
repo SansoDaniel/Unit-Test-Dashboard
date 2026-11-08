@@ -1,0 +1,26 @@
+<%- include('_top', { title: `Aggiungi test · ${session.configuration}`, nav: 'ses' }) %>
+<div class="narrow wide">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb"><a href="/sessioni">Sessioni</a> / <a href="/sessioni/<%= session.id %>"><%= session.configuration %></a></div><h1>Aggiungi test alla sessione</h1>
+      <div class="meta">Test del catalogo non ancora inclusi. Entrano come NOT TESTED.</div></div>
+    <div class="acts"><a class="btn" href="/sessioni/<%= session.id %>">Torna alla sessione</a></div>
+  </div>
+  <form class="filters" method="get" action="/sessioni/<%= session.id %>/aggiungi" role="search">
+    <label class="sr" for="q">Cerca</label><input id="q" name="q" type="search" value="<%= q %>" placeholder="Cerca per ID o nome">
+    <button class="btn" type="submit">Cerca</button>
+  </form>
+  <div class="sheet">
+    <table class="mt">
+      <tbody>
+        <% rows.forEach((t) => { %>
+          <tr><td class="id" style="width:84px"><%= t.code %></td><td><span class="tname"><%= t.name %></span><div class="sub"><%= t.unit %></div></td>
+            <td class="num"><form method="post" action="/sessioni/<%= session.id %>/aggiungi"><input type="hidden" name="code" value="<%= t.code %>"><button class="btn sm" type="submit" <%= session.status === 'closed' ? 'disabled' : '' %>>Aggiungi</button></form></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% if (!rows.length) { %><p class="empty"><%= q ? 'Nessun test trovato tra quelli non inclusi.' : 'Tutti i test del catalogo sono già nella sessione.' %></p><% } %>
+    <% if (rows.length === 50) { %><p class="empty">Mostrati i primi 50: affina la ricerca per vedere gli altri.</p><% } %>
+  </div>
+</div>
+<%- include('_bottom') %>

@@ -1,0 +1,93 @@
+<%- include('_top', { title: 'Dashboard', nav: 'dash' }) %>
+<% if (!info) { %>
+  <div class="ph"><h1>Dashboard</h1></div>
+  <div class="sheet form"><p>Non c'è ancora nessuna release. Importa il file Excel o crea la prima release.</p><div class="row"><a class="btn pri" href="/release/nuova">Nuova release</a></div></div>
+<% } else { const t = summary.totals; const pct = (n) => (t.total ? (100 * n / t.total).toFixed(2) : 0); %>
+  <%- include('_messages') %>
+  <div class="ph">
+    <div>
+      <div class="crumb">Dashboard</div>
+      <h1>Release <%= info.version %></h1>
+      <div class="meta">Rilasciata il <%= fmtDay(info.released_on) %><%= info.author ? ` da ${info.author}` : '' %><%= info.changes ? ` · ${info.changes.split('\n').map((l) => l.replace(/^[\s\-•]+/, '').trim()).filter((l) => l && !l.endsWith(':')).slice(0, 3).join(' · ')}` : '' %></div>
+    </div>
+    <div class="acts"><a class="btn" href="/release/<%= release.id %>/report">Apri report</a><a class="btn pri" href="/sessioni/nuova">Nuova sessione</a></div>
+  </div>
+
+  <div class="sheet status">
+    <div>
+      <span class="lbl">Esito calcolato</span>
+      <div><span class="tag <%= computed.tag %>"><%= computed.label %></span></div>
+      <span class="sub"><%= summary.failedTests ? `${t['NOT PASSED']} NOT PASSED su ${summary.failedTests} test da chiudere o motivare` : t['NOT TESTED'] ? `${t['NOT TESTED']} test ancora da eseguire` : t.total ? 'Tutti i test eseguiti senza NOT PASSED' : 'Nessuna sessione in questa release' %></span>
+    </div>
+    <div>
+      <span class="lbl">Esiti della release · <%= summary.sessions.length %> <%= summary.sessions.length === 1 ? 'sessione' : 'sessioni' %>, <%= t.total %> esiti</span>
+      <div class="meter" aria-hidden="true"><i class="p" style="width:<%= pct(t.PASSED) %>%"></i><i class="f" style="width:<%= pct(t['NOT PASSED']) %>%"></i><i class="n" style="width:<%= pct(t['NOT AVAILABLE']) %>%"></i></div>
+      <div class="legend"><span><b class="lp"><%= t.PASSED %></b> PASSED</span><span><b class="lf"><%= t['NOT PASSED'] %></b> NOT PASSED</span><span><b class="ln"><%= t['NOT AVAILABLE'] %></b> NOT AVAILABLE</span><span><b><%= t['NOT TESTED'] %></b> NOT TESTED</span></div>
+    </div>
+  </div>
+
+  <% const cls = { 'PASSED': 'p', 'NOT AVAILABLE': 'n', 'NOT PASSED': 'f', 'NOT TESTED': 't' }; %>
+  <section class="sheet chart" aria-labelledby="chart-releases">
+    <div class="sh-head between"><h2 id="chart-releases">Media tra le release</h2>
+      <span class="sub"><%= chart.withResults ? `media delle percentuali di ${chart.withResults} ${chart.withResults === 1 ? 'release' : 'release'} con esiti su ${chart.releases}` : 'nessuna release con esiti' %></span></div>
+    <% if (chart.rows.length) { %>
+      <ul class="chart-legend" aria-hidden="true"><% chart.outcomes.forEach((o) => { %><li><i class="sw <%= cls[o] %>"></i><%= o %></li><% }) %></ul>
+      <div class="gauges">
+        <% chart.rows.forEach((r) => { const desc = chart.outcomes.map((o) => `${o} ${fmtPct(r.pct[o])}`).join(', '); %>
+          <figure class="gauge<%= r.avg ? ' avg' : '' %>">
+            <svg viewBox="0 0 200 108" role="img" aria-label="<%= r.label %>: <%= desc %>">
+              <% r.arcs.forEach((a) => { %><path class="<%= cls[a.outcome] %>" d="<%= a.d %>"><title><%= a.outcome %> <%= fmtPct(r.pct[a.outcome]) %></title></path><% }) %>
+              <text x="100" y="86" class="g-val"><%= fmtPct(r.pct.PASSED) %></text>
+              <text x="100" y="103" class="g-cap">PASSED</text>
+            </svg>
+            <figcaption><b><%= r.label %></b><span class="sub"><%= r.avg ? `su ${chart.withResults} release` : `${r.total} esiti` %></span></figcaption>
+          </figure>
+        <% }) %>
+      </div>
+    <% } else { %><p class="empty">Nessuna release ha ancora esiti registrati.</p><% } %>
+  </section>
+
+  <div class="dash">
+    <section class="sheet">
+      <div class="sh-head between"><h2>Copertura per unità</h2><span class="sub">test PASSED sui test dell'unità in ogni sessione</span></div>
+      <% if (untested.units) { %><p class="flag"><%= untested.units %> <%= untested.units === 1 ? 'unità' : 'unità' %> (<%= untested.tests %> test) senza esiti in nessuna sessione.</p><% } %>
+      <% if (summary.sessions.length) { %>
+        <div class="tscroll-in">
+          <table class="mt cov">
+            <thead><tr><th scope="col">Unità del software</th><th scope="col" class="num">Test</th><% summary.sessions.forEach((s) => { %><th scope="col" class="c" title="<%= s.configuration %>"><a href="/sessioni/<%= s.id %>"><%= s.configuration %></a></th><% }) %></tr></thead>
+            <tbody>
+              <% matrix.forEach((u) => { %>
+                <tr class="<%= u.untested ? 'empty' : '' %>">
+                  <td title="<%= u.name %>"><a class="unit-link" href="/catalogo?unit=<%= u.id %>"><%= u.name %></a></td>
+                  <td class="num"><%= u.tests %></td>
+                  <% u.row.forEach((c, i) => { %>
+                    <td class="c c<%= c.level %>"><% if (!c.level) { %><span aria-label="nessun esito">—</span><% } else { %><span title="<%= c.passed %> PASSED su <%= c.n %> test nella sessione <%= summary.sessions[i].configuration %>"><%= c.passed %></span><% if (c.failed) { %><span class="mk f" title="<%= c.failed %> NOT PASSED"><%= c.failed %></span><% } %><% if (c.na) { %><span class="mk n" title="<%= c.na %> NOT AVAILABLE"><%= c.na %></span><% } %><% } %></td>
+                  <% }) %>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <div class="sh-foot">
+          <% if (hidden) { %><a class="link" href="/?unita=tutte">Mostra le altre <%= hidden %> unità</a><% } else { %><span></span><% } %>
+          <span class="legend"><span><span class="mk f" style="margin:0 4px 0 0">1</span>NOT PASSED</span><span><span class="mk n" style="margin:0 4px 0 0">2</span>NOT AVAILABLE</span></span>
+        </div>
+      <% } else { %><p class="empty">Nessuna sessione in questa release. <a class="link" href="/sessioni/nuova">Crea la prima</a>.</p><% } %>
+    </section>
+
+    <section class="sheet">
+      <div class="sh-head between"><h2>NOT PASSED aperti</h2><span class="sub"><%= failed.length %> test · <%= t['NOT PASSED'] %> esiti</span></div>
+      <% if (failed.length) { %>
+        <ul class="nplist">
+          <% failed.slice(0, 6).forEach((f) => { %>
+            <li><span class="id"><%= f.code %></span><a class="tname" href="/catalogo/test/<%= f.code %>"><%= f.name %></a>
+              <span class="where"><%= f.sessions.join(' · ') %><%= f.graphic ? ' · problema grafico' : '' %></span>
+              <% if (f.note) { %><p class="clip2"><%= f.note %></p><% } %></li>
+          <% }) %>
+        </ul>
+        <div class="sh-foot"><a class="link" href="/catalogo?np=1">Tutti i <%= failed.length %> test nel catalogo</a></div>
+      <% } else { %><p class="empty">Nessun NOT PASSED aperto.</p><% } %>
+    </section>
+  </div>
+<% } %>
+<%- include('_bottom') %>

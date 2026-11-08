@@ -1,0 +1,101 @@
+<%
+  const cls = { 'PASSED': 'p', 'NOT PASSED': 'f', 'NOT TESTED': 't', 'NOT AVAILABLE': 'n' };
+  const short = { 'NOT AVAILABLE': 'N/A' };
+  const closed = session.status === 'closed';
+  const pct = (n) => (counts.total ? (100 * n / counts.total).toFixed(2) : 0);
+  const tabCount = { tutti: counts.total, aperti: counts['NOT TESTED'] + counts['NOT PASSED'], falliti: counts['NOT PASSED'], note: counts.notes };
+  const qs = (v) => { const p = new URLSearchParams(); if (v !== 'tutti') p.set('vista', v); if (q) p.set('q', q); return p.size ? `?${p}` : ''; };
+%>
+<%- include('_top', { title: session.configuration, nav: 'ses' }) %>
+  <%- include('_messages') %>
+  <div class="ph">
+    <div>
+      <div class="crumb"><a href="/sessioni">Sessioni</a> / <%= session.version %></div>
+      <h1><%= session.configuration %><% if (closed) { %> <span class="tag info">CHIUSA</span><% } %></h1>
+      <div class="meta"><%= session.devices.length ? session.devices.join(', ') : 'Tutti i dispositivi' %> · tester <%= session.tester ?? 'non indicato' %> · avviata il <%= fmtDay(session.started_on) %></div>
+    </div>
+    <div class="acts">
+      <a class="btn" href="/sessioni/<%= session.id %>/modifica">Modifica</a>
+      <% if (!closed) { %><a class="btn" href="/sessioni/<%= session.id %>/aggiungi">Aggiungi test</a><% } %>
+      <form method="post" action="/sessioni/<%= session.id %>/stato">
+        <input type="hidden" name="status" value="<%= closed ? 'open' : 'closed' %>">
+        <button class="btn" type="submit"><%= closed ? 'Riapri sessione' : 'Chiudi sessione' %></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="progress">
+    <div class="meter" aria-hidden="true"><i class="p" data-meter="PASSED" style="width:<%= pct(counts.PASSED) %>%"></i><i class="f" data-meter="NOT PASSED" style="width:<%= pct(counts['NOT PASSED']) %>%"></i><i class="n" data-meter="NOT AVAILABLE" style="width:<%= pct(counts['NOT AVAILABLE']) %>%"></i></div>
+    <div class="legend">
+      <span><b class="lp" data-count="PASSED"><%= counts.PASSED %></b> PASSED</span>
+      <span><b class="lf" data-count="NOT PASSED"><%= counts['NOT PASSED'] %></b> NOT PASSED</span>
+      <span><b class="ln" data-count="NOT AVAILABLE"><%= counts['NOT AVAILABLE'] %></b> NOT AVAILABLE</span>
+      <span><b data-count="NOT TESTED"><%= counts['NOT TESTED'] %></b> da eseguire</span>
+      <span>su <%= counts.total %> test</span>
+    </div>
+  </div>
+
+  <div class="filters between">
+    <nav class="tabs" aria-label="Filtra i test">
+      <% Object.entries(views).forEach(([k, v]) => { %><a href="/sessioni/<%= session.id %><%= qs(k) %>" <%- k === view ? 'class="on" aria-current="page"' : '' %>><%= v.label %><b data-count="<%= k %>"><%= tabCount[k] %></b></a><% }) %>
+    </nav>
+    <form method="get" action="/sessioni/<%= session.id %>" role="search">
+      <% if (view !== 'tutti') { %><input type="hidden" name="vista" value="<%= view %>"><% } %>
+      <label class="sr" for="q">Cerca test</label><input id="q" name="q" type="search" value="<%= q %>" placeholder="Cerca per ID o nome">
+    </form>
+  </div>
+
+  <div class="sheet">
+    <table class="mt exec">
+      <tbody>
+        <% let lastUnit = null; rows.forEach((t) => { %>
+          <% if (t.unit_id !== lastUnit) { lastUnit = t.unit_id; const u = units.get(t.unit_id); %>
+            <tr class="grp"><th colspan="3" scope="rowgroup"><%= t.unit %><small><%= u.total %> test · <%= u.passed %> PASSED · <%= u.failed %> NOT PASSED</small></th></tr>
+          <% } %>
+          <tr class="trow" id="t-<%= t.code %>" tabindex="0" aria-label="Test <%= t.code %>, <%= t.name %>">
+            <td class="id"><%= t.code %></td>
+            <td>
+              <details>
+                <summary>
+                  <span class="tname"><%= t.name %></span><% if (t.graphic_issue) { %> <span class="tag todo">Problema grafico</span><% } %>
+                  <span class="sub block"><%= t.use_case %><%= t.devices.length ? ` · ${t.devices.join(', ')}` : '' %></span>
+                  <span class="sub block clip note-preview"><%= t.note ? `Nota: ${t.note}` : '' %></span>
+                </summary>
+                <div class="detail">
+                  <div><h3>Descrizione test</h3><p><%= t.description ?? '—' %></p></div>
+                  <div><h3>Operazioni</h3><p><%= t.operations ?? '—' %></p></div>
+                  <div class="fld">
+                    <label for="n<%= t.code %>">Nota</label>
+                    <textarea id="n<%= t.code %>" name="note" form="f<%= t.code %>" rows="3" <%= closed ? 'disabled' : '' %>><%= t.note ?? '' %></textarea>
+                    <label class="cb"><input type="checkbox" name="graphic_issue" value="1" form="f<%= t.code %>" <%= t.graphic_issue ? 'checked' : '' %> <%= closed ? 'disabled' : '' %>> Problema grafico</label>
+                    <% if (!closed) { %>
+                      <div class="row">
+                        <button class="btn sm" type="submit" form="f<%= t.code %>">Salva nota</button>
+                        <% if (t.outcome === 'NOT TESTED' && !t.note && !t.graphic_issue) { %><button class="link small" type="submit" form="r<%= t.code %>">Togli dalla sessione</button><% } %>
+                      </div>
+                    <% } %>
+                  </div>
+                </div>
+              </details>
+            </td>
+            <td class="outcome">
+              <form id="f<%= t.code %>" class="result" method="post" action="/sessioni/<%= session.id %>/esiti/<%= t.code %><%= qs(view) %>">
+                <div class="seg" role="group" aria-label="Esito del test <%= t.code %>">
+                  <% outcomes.forEach((o) => { %><button type="submit" name="outcome" value="<%= o %>" class="<%= cls[o] %>" aria-pressed="<%= t.outcome === o %>" <%= closed ? 'disabled' : '' %>><%= short[o] ?? o %></button><% }) %>
+                </div>
+              </form>
+              <% if (!closed) { %><form id="r<%= t.code %>" method="post" action="/sessioni/<%= session.id %>/test/<%= t.code %>/togli<%= qs(view) %>"></form><% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% if (!rows.length) { %><p class="empty"><%= q || view !== 'tutti' ? 'Nessun test corrisponde al filtro.' : 'La sessione non contiene test.' %></p><% } %>
+    <div class="kbar">
+      <span><kbd>P</kbd>PASSED</span><span><kbd>F</kbd>NOT PASSED</span><span><kbd>N</kbd>NOT TESTED</span><span><kbd>A</kbd>NOT AVAILABLE</span>
+      <span><kbd>↑</kbd><kbd>↓</kbd>test</span><span><kbd>Invio</kbd>dettagli</span>
+      <span id="save-status" class="save" role="status" aria-live="polite"><%= closed ? 'Sessione chiusa: sola lettura' : '' %></span>
+    </div>
+  </div>
+  <script src="/session.js" defer></script>
+<%- include('_bottom') %>

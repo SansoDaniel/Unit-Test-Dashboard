@@ -1,0 +1,5 @@
+<nav class="tabs" aria-label="Impostazioni">
+  <% [['dispositivi', 'Dispositivi'], ['configurazioni', 'Configurazioni'], ['persone', 'Persone']].forEach(([key, label]) => { %>
+    <a href="/impostazioni/<%= key %>" <%- tab === key ? 'class="on" aria-current="page"' : '' %>><%= label %></a>
+  <% }) %>
+</nav>

@@ -1,0 +1,25 @@
+<%- include('_top', { title: original ? original.name : 'Nuova unità', nav: 'cat' }) %>
+<div class="narrow">
+  <%- include('_messages') %>
+  <div class="ph">
+    <div><div class="crumb"><a href="/catalogo">Catalogo</a></div><h1><%= original ? "Modifica unità" : 'Nuova unità del software' %></h1></div>
+  </div>
+  <form class="sheet form" method="post" action="<%= original ? `/catalogo/unita/${original.id}` : '/catalogo/unita' %>">
+    <div class="fld"><label for="name">Nome</label><input id="name" name="name" required value="<%= unit.name %>" autofocus></div>
+    <div class="form-foot">
+      <a class="btn" href="<%= original ? `/catalogo?unit=${original.id}` : '/catalogo' %>">Annulla</a>
+      <button class="btn pri" type="submit"><%= original ? 'Salva' : 'Crea unità' %></button>
+    </div>
+  </form>
+  <% if (original) { %>
+    <div class="sheet form">
+      <h2>Posizione nell'elenco</h2>
+      <div class="row">
+        <form method="post" action="/catalogo/unita/<%= original.id %>/sposta"><input type="hidden" name="dir" value="su"><button class="btn" type="submit">Sposta su</button></form>
+        <form method="post" action="/catalogo/unita/<%= original.id %>/sposta"><input type="hidden" name="dir" value="giu"><button class="btn" type="submit">Sposta giù</button></form>
+      </div>
+    </div>
+    <p><a class="dlink" href="/catalogo/unita/<%= original.id %>/elimina">Elimina unità…</a></p>
+  <% } %>
+</div>
+<%- include('_bottom') %>

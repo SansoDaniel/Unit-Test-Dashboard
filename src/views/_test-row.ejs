@@ -1,0 +1,14 @@
+<%
+  const marks = sessions.map((s) => ({ name: s.name, outcome: outcomes.get(`${t.id} ${s.id}`) ?? 'NOT TESTED' }));
+  const cls = { 'PASSED': 'p', 'NOT PASSED': 'f', 'NOT AVAILABLE': 'n', 'NOT TESTED': '' };
+%>
+<tr class="<%= t.archived ? 'archived' : '' %>">
+  <td class="id"><%= t.code %></td>
+  <td><a class="tname" href="/catalogo/test/<%= t.code %>"><%= t.name %></a><% if (t.archived) { %> <span class="tag todo">ARCHIVIATO</span><% } %></td>
+  <td><% t.devices.forEach((d) => { %><span class="dev"><%= d %></span> <% }) %></td>
+  <td><% if (marks.length) { %><span class="sq" role="img" aria-label="<%= marks.map((m) => `${m.name}: ${m.outcome}`).join('; ') %>"><% marks.forEach((m) => { %><i class="<%= cls[m.outcome] %>" title="<%= m.name %>: <%= m.outcome %>"></i><% }) %></span><% } %></td>
+  <td><div class="row-acts">
+    <a class="link" href="/catalogo/test/<%= t.code %>">Modifica</a>
+    <form method="post" action="/catalogo/test/<%= t.code %>/duplica"><button class="link" type="submit">Duplica</button></form>
+  </div></td>
+</tr>

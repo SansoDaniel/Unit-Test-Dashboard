@@ -1,0 +1,21 @@
+<%- include('_top', { title: `Modifica ${session.configuration}`, nav: 'ses' }) %>
+<div class="narrow">
+  <%- include('_messages') %>
+  <div class="ph"><div><div class="crumb"><a href="/sessioni">Sessioni</a> / <a href="/sessioni/<%= session.id %>"><%= session.configuration %></a></div><h1>Modifica sessione</h1></div></div>
+  <form class="sheet form" method="post" action="/sessioni/<%= session.id %>/modifica">
+    <p class="sub">Release <%= session.version %> · configurazione <%= session.configuration %>. Release e configurazione non si cambiano: per un'altra combinazione crea una nuova sessione.</p>
+    <div class="row3 even2">
+      <div class="fld"><label for="tester_id">Tester</label>
+        <select id="tester_id" name="tester_id"><option value="">Non indicato</option>
+          <% people.forEach((p) => { %><option value="<%= p.id %>" <%= draft.tester_id === p.id ? 'selected' : '' %>><%= p.full_name %></option><% }) %>
+        </select></div>
+      <div class="fld"><label for="started_on">Data di inizio</label><input id="started_on" name="started_on" type="date" value="<%= draft.started_on ?? '' %>"></div>
+    </div>
+    <div class="form-foot">
+      <a class="btn" href="/sessioni/<%= session.id %>">Annulla</a>
+      <button class="btn pri" type="submit">Salva</button>
+    </div>
+  </form>
+  <p><a class="dlink" href="/sessioni/<%= session.id %>/elimina">Elimina sessione…</a></p>
+</div>
+<%- include('_bottom') %>
